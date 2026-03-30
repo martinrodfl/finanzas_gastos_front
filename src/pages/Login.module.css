@@ -1,0 +1,137 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--color-bg-login-start) 0%, var(--color-bg-login-mid) 50%, var(--color-bg-login-end) 100%);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--color-shadow-elevated);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.2rem;
+}
+
+.titulo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.subtitulo {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.campo input {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  outline: none;
+  background: var(--color-surface-secondary);
+}
+
+.campo input:focus {
+  border-color: var(--color-primary);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.boton {
+  padding: 0.8rem;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .card {
+    max-width: 100%;
+    padding: 1.4rem;
+  }
+
+  .toolbar {
+    margin-bottom: 0.8rem;
+  }
+
+  .titulo {
+    font-size: 1.35rem;
+  }
+
+  .subtitulo {
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .titulo {
+    font-size: 1.2rem;
+  }
+
+  .campo input,
+  .boton {
+    font-size: 0.92rem;
+  }
+}

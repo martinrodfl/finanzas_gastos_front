@@ -1,0 +1,208 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vacio {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 3rem;
+}
+
+.grupo {
+  background: var(--color-surface);
+  border-radius: 10px;
+  box-shadow: var(--color-shadow-card);
+  overflow-x: auto;
+}
+
+.cabecera {
+  min-width: 820px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2rem 10rem 5rem 1fr 14rem 1.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  background: none;
+  border: none;
+  border-left: 4px solid var(--color-border-strong);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.cabecera:hover {
+  background: var(--color-surface-hover);
+}
+
+.icono {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.cantidad {
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.barraWrapper {
+  height: 8px;
+  background: var(--color-surface-soft);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barra {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 4px;
+}
+
+.totales {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.egreso {
+  font-weight: 700;
+  color: var(--color-danger);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ingreso {
+  font-weight: 700;
+  color: var(--color-success);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  color: var(--color-text-soft);
+  text-align: center;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.tabla thead tr {
+  background: var(--color-surface-secondary);
+}
+
+.tabla th {
+  padding: 0.6rem 1.25rem;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.tabla tbody tr {
+  border-top: 1px solid var(--color-border);
+  transition: background-color 0.1s ease;
+}
+
+.tabla tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.tabla td {
+  padding: 0.6rem 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.fecha {
+  white-space: nowrap;
+  color: var(--color-text-soft);
+  font-size: 0.82rem;
+}
+
+.monto {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.colorEgreso {
+  color: var(--color-danger);
+}
+
+.colorIngreso {
+  color: var(--color-success);
+}
+
+.selectorCat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.selectCat {
+  font-size: 0.82rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 5px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  cursor: pointer;
+  outline: none;
+  max-width: 180px;
+  transition: border-color 0.15s ease;
+}
+
+.selectCat:hover {
+  border-color: var(--color-text-soft);
+}
+
+.btnReset {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-text-soft);
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.btnReset:hover {
+  color: var(--color-danger);
+}
+
+.guardando {
+  color: var(--color-text-soft);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.etiquetaRegla {
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: default;
+  user-select: none;
+}
+
+@media (max-width: 680px) {
+
+  .cabecera,
+  .tabla {
+    min-width: 740px;
+  }
+}

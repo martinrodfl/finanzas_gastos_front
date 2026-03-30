@@ -1,0 +1,551 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+.header {
+  background: var(--color-header-bg);
+  color: var(--color-header-text);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.headerAcciones {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btnSalir {
+  background: transparent;
+  border: 1.5px solid var(--color-header-border);
+  color: var(--color-header-text);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+.btnSalir:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.main {
+  width: min(100%, 1720px);
+  margin: 0 auto;
+  padding: clamp(1rem, 1.4vw, 1.5rem) clamp(0.9rem, 2.2vw, 2rem);
+  flex: 1;
+}
+
+.cargasGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.importadorExcel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.bloqueCargas {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  box-shadow: var(--color-shadow-card);
+}
+
+.cargaManual {
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.panelTitulo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bloqueTitulo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.bloqueTitulo:hover {
+  color: var(--color-primary);
+}
+
+.chevronBloque {
+  font-size: 1rem;
+  color: var(--color-text-soft);
+}
+
+.bloqueContenido {
+  margin-top: 0.9rem;
+}
+
+.importadorControles {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.btnAccion {
+  min-height: 42px;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.iconoBoton {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.btnExaminar {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.btnExaminar:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.archivoInputPreview {
+  flex: 1;
+  min-width: 210px;
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-muted);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.86rem;
+}
+
+.btnImportar {
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  cursor: pointer;
+}
+
+.btnImportar:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.btnImportar:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.archivoSeleccionado {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.6rem;
+}
+
+.mensajeImport {
+  font-size: 0.85rem;
+  color: var(--color-success);
+  margin-top: 0.45rem;
+}
+
+.errorImport {
+  font-size: 0.85rem;
+  color: var(--color-danger-strong);
+  margin-top: 0.45rem;
+}
+
+.resumenImport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+  background: var(--color-success-soft);
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+}
+
+.resumenImport span {
+  white-space: nowrap;
+}
+
+.manualForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.manualForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.manualForm input,
+.manualForm select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  outline: none;
+  background: var(--color-surface-secondary);
+}
+
+.manualForm input:focus,
+.manualForm select:focus {
+  border-color: var(--color-primary);
+}
+
+.manualRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.btnGuardarManual {
+  border: none;
+  background: var(--color-secondary);
+  color: var(--color-text-inverse);
+  padding: 0.58rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btnGuardarManual:hover:not(:disabled) {
+  background: var(--color-secondary-hover);
+}
+
+.btnGuardarManual:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.controles {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.filtroMes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filtroMes label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.filtroMes select {
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+  background: var(--color-surface);
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tarjeta {
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-shadow: var(--color-shadow-card);
+  border-left: 4px solid var(--color-border-strong);
+}
+
+.tarjeta span {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tarjeta strong {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.debito {
+  border-color: var(--color-danger);
+}
+
+.debito strong {
+  color: var(--color-danger);
+}
+
+.credito {
+  border-color: var(--color-success);
+}
+
+.credito strong {
+  color: var(--color-success);
+}
+
+.saldo {
+  border-color: var(--color-info);
+}
+
+.saldo strong {
+  color: var(--color-info);
+}
+
+.cargando {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 3rem;
+}
+
+.toggleVista {
+  display: flex;
+  background: var(--color-surface-soft);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggleBtn {
+  padding: 0.4rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  transition: all 0.15s ease;
+}
+
+.toggleBtn:hover {
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-text-primary);
+}
+
+.toggleActivo {
+  padding: 0.4rem 1rem;
+  border: none;
+  background: var(--color-surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 1200px) {
+  .resumen {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+  }
+
+  .headerAcciones {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .cargasGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .manualRow2 {
+    grid-template-columns: 1fr;
+  }
+
+  .importadorControles {
+    align-items: stretch;
+  }
+
+  .btnAccion,
+  .archivoInputPreview {
+    width: 100%;
+  }
+
+  .controles {
+    align-items: stretch;
+  }
+
+  .toggleVista {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .filtroMes {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filtroMes select {
+    width: min(100%, 260px);
+  }
+}
+
+@media (max-width: 680px) {
+  .resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .bloqueCargas,
+  .importadorExcel,
+  .tarjeta {
+    border-radius: 8px;
+  }
+
+  .toggleVista {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    background: transparent;
+    padding: 0;
+  }
+
+  .toggleBtn,
+  .toggleActivo {
+    width: 100%;
+    text-align: center;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .filtroMes {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .filtroMes select {
+    width: 100%;
+  }
+
+  .archivoInputPreview {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .header h1 {
+    font-size: 1rem;
+  }
+
+  .btnSalir {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .bloqueTitulo {
+    font-size: 0.85rem;
+  }
+
+  .panelTitulo {
+    font-size: 0.78rem;
+  }
+
+  .btnAccion {
+    min-height: 38px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  .header {
+    padding: 1rem clamp(2rem, 4vw, 5rem);
+  }
+
+  .main {
+    width: min(100%, 1960px);
+  }
+
+  .resumen {
+    gap: 1.25rem;
+  }
+
+  .tarjeta {
+    padding: 1.4rem 1.8rem;
+  }
+}
