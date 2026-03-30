@@ -33,6 +33,7 @@ export default function Dashboard() {
 		const hoy = new Date().toISOString().slice(0, 10);
 		return {
 			fecha: hoy,
+			tipo: 'egreso',
 			descripcion: '',
 			dependencia: '',
 			documento: '',
@@ -209,6 +210,7 @@ export default function Dashboard() {
 		try {
 			const payload = {
 				fecha: manualForm.fecha,
+				tipo: manualForm.tipo,
 				descripcion: manualForm.descripcion.trim(),
 				dependencia: manualForm.dependencia.trim() || null,
 				documento: manualForm.documento.trim() || null,
@@ -355,7 +357,7 @@ export default function Dashboard() {
 									onSubmit={handleGuardarManual}
 									className={styles.manualForm}
 								>
-									<div className={styles.manualRow2}>
+									<div className={styles.manualRow3}>
 										<label>
 											Fecha
 											<input
@@ -365,6 +367,17 @@ export default function Dashboard() {
 												onChange={handleManualChange}
 												required
 											/>
+										</label>
+										<label>
+											Tipo
+											<select
+												name='tipo'
+												value={manualForm.tipo}
+												onChange={handleManualChange}
+											>
+												<option value='egreso'>Egreso</option>
+												<option value='ingreso'>Ingreso</option>
+											</select>
 										</label>
 										<label>
 											Monto

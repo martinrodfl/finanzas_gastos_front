@@ -259,6 +259,12 @@
   gap: 0.65rem;
 }
 
+.manualRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.65rem;
+}
+
 .btnGuardarManual {
   border: none;
   background: var(--color-secondary);
@@ -434,6 +440,10 @@
   }
 
   .manualRow2 {
+    grid-template-columns: 1fr;
+  }
+
+  .manualRow3 {
     grid-template-columns: 1fr;
   }
 
