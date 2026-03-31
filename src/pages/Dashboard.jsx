@@ -321,14 +321,7 @@ export default function Dashboard() {
 											Total filas: <strong>{resumenImport.total_filas}</strong>
 										</span>
 										<span>
-											Guardados:{' '}
-											<strong>
-												{resumenImport.guardados > 0 ? (
-													resumenImport.guardados
-												) : (
-													<span>0</span>
-												)}
-											</strong>
+											Guardados: <strong>{resumenImport.guardados}</strong>
 										</span>
 										<span>
 											Duplicados: <strong>{resumenImport.duplicados}</strong>
@@ -466,6 +459,7 @@ export default function Dashboard() {
 					)}
 				</div>
 
+				{/* Panel: botones de cambio de Vistas */}
 				<div className={styles.controles}>
 					<div className={styles.toggleVista}>
 						<button
@@ -514,6 +508,7 @@ export default function Dashboard() {
 					)}
 				</div>
 
+				{/* Panel: Cards de totales */}
 				{vista !== 'mensual' && (
 					<div className={styles.resumen}>
 						<div className={`${styles.tarjeta} ${styles.debito}`}>

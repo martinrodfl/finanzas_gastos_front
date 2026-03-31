@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { categorizar, getCategorias } from '../utils/categorias';
+import { useViewport } from '../hooks/useViewport';
 import api from '../api/client';
 import styles from './VistaCategorias.module.css';
 
 export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 	const [expandido, setExpandido] = useState(null);
 	const [guardando, setGuardando] = useState(null);
-
+	const { width } = useViewport();
 	const todasCategorias = getCategorias();
 
 	const resolverCategoria = (mov) => {
@@ -63,12 +64,19 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 	};
 
 	const maxDebito = Math.max(...grupos.map((g) => g.totalDebito), 1);
+
 	const fmt = (n) =>
 		`$ ${n.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
 	const fmtFecha = (f) => {
 		const [y, m, d] = f.split('-');
 		return `${d}/${m}/${y}`;
 	};
+
+	const fmtFecha2 = (f) => {
+		const [_y, m, d] = f.split('-');
+		return `${d}/${m}`;
+	};
+
 	const toggle = (nombre) =>
 		setExpandido((prev) => (prev === nombre ? null : nombre));
 
@@ -94,15 +102,17 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 							<span className={styles.icono}>{categoria.icono}</span>
 							<span className={styles.nombre}>{categoria.nombre}</span>
 							<span className={styles.cantidad}>{movs.length} mov.</span>
-							<div className={styles.barraWrapper}>
-								<div
-									className={styles.barra}
-									style={{
-										width: `${(totalDebito / maxDebito) * 100}%`,
-										background: categoria.color,
-									}}
-								/>
-							</div>
+							{width >= 740 && (
+								<div className={styles.barraWrapper}>
+									<div
+										className={styles.barra}
+										style={{
+											width: `${(totalDebito / maxDebito) * 100}%`,
+											background: categoria.color,
+										}}
+									/>
+								</div>
+							)}
 							<div className={styles.totales}>
 								{totalDebito > 0 && (
 									<span className={styles.egreso}>{fmt(totalDebito)}</span>
@@ -135,8 +145,15 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 
 										return (
 											<tr key={m.id}>
-												<td className={styles.fecha}>{fmtFecha(m.fecha)}</td>
-												<td>{m.descripcion}</td>
+												<td className={styles.fecha}>
+													{width >= 740
+														? fmtFecha(m.fecha)
+														: fmtFecha2(m.fecha)}
+												</td>
+												<td className={styles.descriptionBody}>
+													{m.descripcion}
+												</td>
+
 												<td>
 													<div className={styles.selectorCat}>
 														<select
@@ -174,6 +191,7 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 														)}
 													</div>
 												</td>
+
 												<td className={`${styles.monto} ${styles.colorEgreso}`}>
 													{m.debito > 0 ? fmt(Number(m.debito)) : '—'}
 												</td>

@@ -39,6 +39,7 @@
   --color-warning: #d69e2e;
   --color-shadow-card: 0 12px 30px rgba(15, 23, 42, 0.08);
   --color-shadow-elevated: 0 20px 60px rgba(15, 23, 42, 0.18);
+  /* categorias */
   --color-category-supermercado: #38a169;
   --color-category-servicios: #3182ce;
   --color-category-alquiler: #805ad5;
@@ -48,7 +49,7 @@
   --color-category-entretenimiento: #ed8936;
   --color-category-transferencias: #718096;
   --color-category-ingresos: #276749;
-  --color-category-personal: #d53f8c;
+  --color-category-personal: #3a3520;
   --color-category-impuestos: #dd6b20;
   --color-category-otros: #a0aec0;
 }
@@ -100,7 +101,7 @@
   --color-category-entretenimiento: #ffab64;
   --color-category-transferencias: #9db0c5;
   --color-category-ingresos: #6fd29c;
-  --color-category-personal: #f278b9;
+  --color-category-personal: #3d340c;
   --color-category-impuestos: #ff9d62;
   --color-category-otros: #91a4ba;
 }
