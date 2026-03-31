@@ -143,7 +143,12 @@ export const CATEGORIAS = [
 		nombre: 'Personal',
 		color: 'var(--color-category-personal)',
 		icono: '👤',
-		palabras: ['PERSONAL', 'GASTOS PERSONALES', 'OTROS GASTOS'],
+		palabras: [
+			'PERSONAL',
+			'GASTOS PERSONALES',
+			'OTROS GASTOS',
+			'Comercio: CLASSIE *HANDY*',
+		],
 	},
 	{
 		nombre: 'Impuestos',
@@ -167,7 +172,7 @@ export const CATEGORIA_OTROS = {
 	nombre: 'Otros',
 	color: 'var(--color-category-otros)',
 	icono: '📋',
-	palabras: [],
+	palabras: ['Retiro Red: REDBROU', 'Retiro Red: REDPAGOS', 'RETIRO RED'],
 };
 
 export function categorizar(descripcion = '') {

@@ -203,7 +203,6 @@
 @media (max-width: 740px) {
 
   .cabecera {
-    /* max-width: 370px; */
     width: 100%;
     display: grid;
     grid-template-columns: 10% 30% 20% 30% 10%;
