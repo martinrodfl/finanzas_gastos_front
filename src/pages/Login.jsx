@@ -42,9 +42,6 @@ export default function Login() {
 	return (
 		<div className={styles.container}>
 			<div className={styles.card}>
-				<div className={styles.toolbar}>
-					<ThemeToggle />
-				</div>
 				<h1 className={styles.titulo}>Finanzas Gastos</h1>
 				<p className={styles.subtitulo}>
 					Iniciá sesión para ver tus movimientos
