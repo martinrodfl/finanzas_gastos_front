@@ -1,30 +1,63 @@
-import { useMemo, useState } from 'react';
-import { categorizar, getCategorias } from '../utils/categorias';
+import { useCallback, useMemo, useState } from 'react';
+import {
+	categorizar,
+	combinarCategoriasConPersonalizadas,
+	crearCategoriaPersonalizada,
+} from '../utils/categorias';
+import {
+	ICONO_CATEGORIA_DEFAULT,
+	ICONOS_CATEGORIA,
+} from '../utils/categoriaIconos';
 import { useViewport } from '../hooks/useViewport';
 import api from '../api/client';
 import styles from './VistaCategorias.module.css';
 
-export default function VistaCategorias({ movimientos, onCategoriaChange }) {
+export default function VistaCategorias({
+	movimientos,
+	onCategoriaChange,
+	categorias: todasCategoriasBase,
+	guardarCategoria: guardarPersonalizada,
+}) {
 	const [expandido, setExpandido] = useState(null);
 	const [guardando, setGuardando] = useState(null);
+	const [editorNuevaPorId, setEditorNuevaPorId] = useState({});
+	const [textoNuevaPorId, setTextoNuevaPorId] = useState({});
+	const [iconoNuevaPorId, setIconoNuevaPorId] = useState({});
 	const { width } = useViewport();
-	const todasCategorias = getCategorias();
 
-	const resolverCategoria = (mov) => {
-		if (mov.categoria_manual) {
-			return (
-				todasCategorias.find((c) => c.nombre === mov.categoria_manual) ??
-				categorizar(mov.descripcion)
-			);
-		}
-		if (mov.categoria_regla) {
-			return (
-				todasCategorias.find((c) => c.nombre === mov.categoria_regla) ??
-				categorizar(mov.descripcion)
-			);
-		}
-		return categorizar(mov.descripcion);
-	};
+	const todasCategorias = useMemo(() => {
+		const nombresCategorias = movimientos.flatMap((m) => [
+			m.categoria_manual,
+			m.categoria_regla,
+		]);
+		return combinarCategoriasConPersonalizadas(
+			todasCategoriasBase,
+			nombresCategorias,
+		);
+	}, [movimientos, todasCategoriasBase]);
+
+	const resolverCategoria = useCallback(
+		(mov) => {
+			const nombreManual = String(mov.categoria_manual ?? '').trim();
+			if (nombreManual) {
+				return (
+					todasCategorias.find((c) => c.nombre === nombreManual) ??
+					crearCategoriaPersonalizada(nombreManual)
+				);
+			}
+
+			const nombreRegla = String(mov.categoria_regla ?? '').trim();
+			if (nombreRegla) {
+				return (
+					todasCategorias.find((c) => c.nombre === nombreRegla) ??
+					crearCategoriaPersonalizada(nombreRegla)
+				);
+			}
+
+			return categorizar(mov.descripcion);
+		},
+		[todasCategorias],
+	);
 
 	const grupos = useMemo(() => {
 		const mapa = new Map();
@@ -39,6 +72,15 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 
 		for (const mov of movimientos) {
 			const cat = resolverCategoria(mov);
+			if (!mapa.has(cat.nombre)) {
+				mapa.set(cat.nombre, {
+					categoria: cat,
+					movimientos: [],
+					totalDebito: 0,
+					totalCredito: 0,
+				});
+			}
+
 			const grupo = mapa.get(cat.nombre);
 			grupo.movimientos.push(mov);
 			grupo.totalDebito += Number(mov.debito);
@@ -48,8 +90,7 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 		return Array.from(mapa.values())
 			.filter((g) => g.movimientos.length > 0)
 			.sort((a, b) => b.totalDebito - a.totalDebito);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [movimientos]);
+	}, [movimientos, resolverCategoria, todasCategorias]);
 
 	const cambiarCategoria = async (id, categoria) => {
 		setGuardando(id);
@@ -61,6 +102,31 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 		} finally {
 			setGuardando(null);
 		}
+	};
+
+	const activarEditorNueva = (id) => {
+		setEditorNuevaPorId((prev) => ({ ...prev, [id]: true }));
+		setIconoNuevaPorId((prev) => ({
+			...prev,
+			[id]: prev[id] ?? ICONO_CATEGORIA_DEFAULT,
+		}));
+	};
+
+	const cancelarEditorNueva = (id) => {
+		setEditorNuevaPorId((prev) => ({ ...prev, [id]: false }));
+		setTextoNuevaPorId((prev) => ({ ...prev, [id]: '' }));
+		setIconoNuevaPorId((prev) => ({ ...prev, [id]: ICONO_CATEGORIA_DEFAULT }));
+	};
+
+	const guardarNuevaCategoria = async (id) => {
+		const nombre = (textoNuevaPorId[id] ?? '').trim();
+		if (!nombre) return;
+		await guardarPersonalizada(
+			nombre,
+			iconoNuevaPorId[id] ?? ICONO_CATEGORIA_DEFAULT,
+		);
+		await cambiarCategoria(id, nombre);
+		cancelarEditorNueva(id);
 	};
 
 	const maxDebito = Math.max(...grupos.map((g) => g.totalDebito), 1);
@@ -160,7 +226,9 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 															value={catActual.nombre}
 															disabled={cargando}
 															onChange={(e) =>
-																cambiarCategoria(m.id, e.target.value)
+																e.target.value === '__nueva__'
+																	? activarEditorNueva(m.id)
+																	: cambiarCategoria(m.id, e.target.value)
 															}
 															className={styles.selectCat}
 															style={{
@@ -176,7 +244,68 @@ export default function VistaCategorias({ movimientos, onCategoriaChange }) {
 																	{c.icono} {c.nombre}
 																</option>
 															))}
+															<option value='__nueva__'>
+																+ Nueva categoría
+															</option>
 														</select>
+														{editorNuevaPorId[m.id] && !cargando && (
+															<div className={styles.nuevaCategoriaRow}>
+																<input
+																	type='text'
+																	placeholder='Nombre de categoría'
+																	value={textoNuevaPorId[m.id] ?? ''}
+																	onChange={(e) =>
+																		setTextoNuevaPorId((prev) => ({
+																			...prev,
+																			[m.id]: e.target.value,
+																		}))
+																	}
+																	onKeyDown={(e) => {
+																		if (e.key === 'Enter') {
+																			e.preventDefault();
+																			guardarNuevaCategoria(m.id);
+																		}
+																	}}
+																	className={styles.nuevaCategoriaInput}
+																/>
+																<select
+																	value={
+																		iconoNuevaPorId[m.id] ??
+																		ICONO_CATEGORIA_DEFAULT
+																	}
+																	onChange={(e) =>
+																		setIconoNuevaPorId((prev) => ({
+																			...prev,
+																			[m.id]: e.target.value,
+																		}))
+																	}
+																	className={styles.iconoCategoriaSelect}
+																>
+																	{ICONOS_CATEGORIA.map((op) => (
+																		<option
+																			key={op.icono}
+																			value={op.icono}
+																		>
+																			{op.icono} {op.nombre}
+																		</option>
+																	))}
+																</select>
+																<button
+																	type='button'
+																	onClick={() => guardarNuevaCategoria(m.id)}
+																	className={styles.btnNuevaCategoria}
+																>
+																	Guardar
+																</button>
+																<button
+																	type='button'
+																	onClick={() => cancelarEditorNueva(m.id)}
+																	className={styles.btnCancelarNueva}
+																>
+																	Cancelar
+																</button>
+															</div>
+														)}
 														{esManual && !cargando && (
 															<button
 																className={styles.btnReset}

@@ -153,6 +153,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  flex-wrap: wrap;
 }
 
 .selectCat {
@@ -169,6 +170,46 @@
 
 .selectCat:hover {
   border-color: var(--color-text-soft);
+}
+
+.nuevaCategoriaRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.nuevaCategoriaInput {
+  min-width: 120px;
+  padding: 0.2rem 0.4rem;
+  border-radius: 5px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.78rem;
+}
+
+.iconoCategoriaSelect {
+  padding: 0.2rem 0.35rem;
+  border-radius: 5px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  font-size: 0.75rem;
+}
+
+.btnNuevaCategoria,
+.btnCancelarNueva {
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.22rem 0.4rem;
+  color: var(--color-text-primary);
+}
+
+.btnNuevaCategoria:hover,
+.btnCancelarNueva:hover {
+  background: var(--color-surface-hover);
 }
 
 .btnReset {

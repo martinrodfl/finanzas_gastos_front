@@ -5,7 +5,7 @@ import TablaMovimientos from '../components/TablaMovimientos';
 import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
 import VistaMensual from '../components/VistaMensual';
-import { getCategorias } from '../utils/categorias';
+import { useCategorias } from '../hooks/useCategorias';
 import styles from './Dashboard.module.css';
 
 const normalizeMeses = (payload) => {
@@ -43,7 +43,7 @@ export default function Dashboard() {
 	});
 	const [vista, setVista] = useState('tabla');
 	const navigate = useNavigate();
-	const categorias = getCategorias();
+	const { categorias, guardar: guardarCategoria } = useCategorias();
 
 	const totalDebito = movimientos.reduce((s, m) => s + Number(m.debito), 0);
 	const totalCredito = movimientos.reduce((s, m) => s + Number(m.credito), 0);
@@ -549,11 +549,15 @@ export default function Dashboard() {
 					<TablaMovimientos
 						movimientos={movimientos}
 						onCategoriaChange={handleCategoriaChange}
+						categorias={categorias}
+						guardarCategoria={guardarCategoria}
 					/>
 				) : (
 					<VistaCategorias
 						movimientos={movimientos}
 						onCategoriaChange={handleCategoriaChange}
+						categorias={categorias}
+						guardarCategoria={guardarCategoria}
 					/>
 				)}
 			</main>

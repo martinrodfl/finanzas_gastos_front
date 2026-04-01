@@ -55,6 +55,12 @@
   min-width: 170px;
 }
 
+.selectorWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .selectCategoria {
   width: 100%;
   padding: 0.3rem 0.5rem;
@@ -62,6 +68,47 @@
   border-radius: 6px;
   background: var(--color-surface-secondary);
   font-size: 0.82rem;
+}
+
+.nuevaCategoriaRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.nuevaCategoriaInput {
+  min-width: 0;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 0.78rem;
+}
+
+.iconoCategoriaSelect {
+  padding: 0.28rem 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-secondary);
+  font-size: 0.75rem;
+}
+
+.btnNuevaCategoria,
+.btnCancelarNueva {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  font-size: 0.73rem;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+
+.btnNuevaCategoria:hover,
+.btnCancelarNueva:hover {
+  background: var(--color-surface-hover);
 }
 
 .monto {

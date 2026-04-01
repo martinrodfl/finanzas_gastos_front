@@ -1,3 +1,5 @@
+import { ICONO_CATEGORIA_DEFAULT } from './categoriaIconos';
+
 export const CATEGORIAS = [
 	{
 		nombre: 'Supermercado',
@@ -175,6 +177,18 @@ export const CATEGORIA_OTROS = {
 	palabras: ['Retiro Red: REDBROU', 'Retiro Red: REDPAGOS', 'RETIRO RED'],
 };
 
+export function crearCategoriaPersonalizada(nombre = '', iconoElegido = null) {
+	const nombreLimpio = nombre.trim();
+	const icono = iconoElegido || ICONO_CATEGORIA_DEFAULT;
+
+	return {
+		nombre: nombreLimpio,
+		color: 'var(--color-category-otros)',
+		icono,
+		palabras: [],
+	};
+}
+
 export function categorizar(descripcion = '') {
 	const desc = descripcion.toUpperCase();
 	for (const cat of CATEGORIAS) {
@@ -187,4 +201,21 @@ export function categorizar(descripcion = '') {
 
 export function getCategorias() {
 	return [...CATEGORIAS, CATEGORIA_OTROS];
+}
+
+export function combinarCategoriasConPersonalizadas(
+	categoriasBase,
+	nombres = [],
+) {
+	const mapa = new Map(categoriasBase.map((cat) => [cat.nombre, cat]));
+
+	for (const nombreRaw of nombres) {
+		const nombre = String(nombreRaw ?? '').trim();
+		if (!nombre) continue;
+		if (!mapa.has(nombre)) {
+			mapa.set(nombre, crearCategoriaPersonalizada(nombre));
+		}
+	}
+
+	return Array.from(mapa.values());
 }
