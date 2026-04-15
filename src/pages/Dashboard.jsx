@@ -20,6 +20,7 @@ export default function Dashboard() {
 	const [meses, setMeses] = useState([]);
 	const [mesSeleccionado, setMesSeleccionado] = useState('');
 	const [loading, setLoading] = useState(true);
+	const [loadingMes, setLoadingMes] = useState(false);
 	const [archivoExcel, setArchivoExcel] = useState(null);
 	const [importandoExcel, setImportandoExcel] = useState(false);
 	const [mensajeImport, setMensajeImport] = useState('');
@@ -50,7 +51,7 @@ export default function Dashboard() {
 
 	const cargarMeses = async ({ mesPreferido = '' } = {}) => {
 		const { data } = await api.get('/movimientos/meses');
-		const mesesNormalizados = normalizeMeses(data);
+		const mesesNormalizados = normalizeMeses(data).sort();
 		setMeses(mesesNormalizados);
 
 		if (mesesNormalizados.length === 0) {
@@ -60,10 +61,11 @@ export default function Dashboard() {
 			return;
 		}
 
+		const ultimoMes = mesesNormalizados[mesesNormalizados.length - 1];
 		const siguienteMes =
 			mesPreferido && mesesNormalizados.includes(mesPreferido)
 				? mesPreferido
-				: mesesNormalizados[0];
+				: ultimoMes;
 
 		if (siguienteMes === mesSeleccionado) {
 			setLoading(true);
@@ -89,7 +91,10 @@ export default function Dashboard() {
 		api
 			.get('/movimientos', { params: { mes: mesSeleccionado } })
 			.then(({ data }) => setMovimientos(data))
-			.finally(() => setLoading(false));
+			.finally(() => {
+				setLoading(false);
+				setLoadingMes(false);
+			});
 	}, [mesSeleccionado]);
 
 	const salir = () => {
@@ -136,7 +141,7 @@ export default function Dashboard() {
 	};
 
 	const handleMesChange = (e) => {
-		setLoading(true);
+		setLoadingMes(true);
 		setMesSeleccionado(e.target.value);
 	};
 
@@ -545,20 +550,30 @@ export default function Dashboard() {
 					<VistaMensual />
 				) : loading ? (
 					<p className={styles.cargando}>Cargando movimientos...</p>
-				) : vista === 'tabla' ? (
-					<TablaMovimientos
-						movimientos={movimientos}
-						onCategoriaChange={handleCategoriaChange}
-						categorias={categorias}
-						guardarCategoria={guardarCategoria}
-					/>
 				) : (
-					<VistaCategorias
-						movimientos={movimientos}
-						onCategoriaChange={handleCategoriaChange}
-						categorias={categorias}
-						guardarCategoria={guardarCategoria}
-					/>
+					<div
+						style={{
+							opacity: loadingMes ? 0.4 : 1,
+							transition: 'opacity 0.2s ease',
+							pointerEvents: loadingMes ? 'none' : 'auto',
+						}}
+					>
+						{vista === 'tabla' ? (
+							<TablaMovimientos
+								movimientos={movimientos}
+								onCategoriaChange={handleCategoriaChange}
+								categorias={categorias}
+								guardarCategoria={guardarCategoria}
+							/>
+						) : (
+							<VistaCategorias
+								movimientos={movimientos}
+								onCategoriaChange={handleCategoriaChange}
+								categorias={categorias}
+								guardarCategoria={guardarCategoria}
+							/>
+						)}
+					</div>
 				)}
 			</main>
 		</div>
