@@ -2,7 +2,7 @@ import { ICONO_CATEGORIA_DEFAULT } from './categoriaIconos';
 
 export const CATEGORIAS = [
 	{
-		nombre: 'Supermercado',
+		nombre: 'Alimentacion/Supermercado',
 		color: 'var(--color-category-supermercado)',
 		icono: '🛒',
 		palabras: [

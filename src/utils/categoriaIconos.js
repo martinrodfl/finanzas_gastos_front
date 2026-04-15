@@ -1,7 +1,7 @@
 export const ICONO_CATEGORIA_DEFAULT = '🏷';
 
 export const ICONOS_CATEGORIA = [
-	{ icono: '🛒', nombre: 'Supermercado' },
+	{ icono: '🛒', nombre: 'Alimentacion/Supermercado' },
 	{ icono: '⚡', nombre: 'Servicios' },
 	{ icono: '🏠', nombre: 'Vivienda' },
 	{ icono: '🏥', nombre: 'Salud' },

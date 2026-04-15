@@ -129,7 +129,8 @@ export default function VistaCategorias({
 		cancelarEditorNueva(id);
 	};
 
-	const maxDebito = Math.max(...grupos.map((g) => g.totalDebito), 1);
+	const totalDebitoGlobal =
+		grupos.reduce((sum, g) => sum + g.totalDebito, 0) || 1;
 
 	const fmt = (n) =>
 		`$ ${n.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
@@ -170,13 +171,20 @@ export default function VistaCategorias({
 							<span className={styles.cantidad}>{movs.length} mov.</span>
 							{width >= 740 && (
 								<div className={styles.barraWrapper}>
-									<div
-										className={styles.barra}
-										style={{
-											width: `${(totalDebito / maxDebito) * 100}%`,
-											background: categoria.color,
-										}}
-									/>
+									<div className={styles.barraTrack}>
+										<div
+											className={styles.barra}
+											style={{
+												width: `${(totalDebito / totalDebitoGlobal) * 100}%`,
+												background: categoria.color,
+											}}
+										/>
+									</div>
+									<span className={styles.pctLabel}>
+										{totalDebito > 0
+											? `${((totalDebito / totalDebitoGlobal) * 100).toFixed(1)}%`
+											: ''}
+									</span>
 								</div>
 							)}
 							<div className={styles.totales}>

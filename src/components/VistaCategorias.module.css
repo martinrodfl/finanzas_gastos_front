@@ -55,6 +55,13 @@
 }
 
 .barraWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.barraTrack {
+  flex: 1;
   height: 8px;
   background: var(--color-surface-soft);
   border-radius: 4px;
@@ -66,6 +73,14 @@
   border-radius: 4px;
   transition: width 0.3s ease;
   min-width: 4px;
+}
+
+.pctLabel {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-soft);
+  min-width: 3.2rem;
+  text-align: right;
 }
 
 .totales {
