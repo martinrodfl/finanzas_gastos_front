@@ -560,3 +560,146 @@
     padding: 1.4rem 1.8rem;
   }
 }
+
+/* ─── Gastos fijos ─────────────────────────────────────── */
+.bloqueGastosFijos {
+  margin-top: 1rem;
+}
+
+.gastosFijosResumenHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.gastosFijosContadorOk {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-success, #22c55e);
+  background: color-mix(in srgb, var(--color-success, #22c55e) 14%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-success, #22c55e) 35%, transparent);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+}
+
+.gastosFijosContadorPendiente {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #f97316;
+  background: color-mix(in srgb, #f97316 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, #f97316 30%, transparent);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+}
+
+.gastosFijosMontoTotal {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+}
+
+.gastosFijosGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.gastoFijoChip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease;
+}
+
+.gastoFijoChip:hover {
+  transform: translateY(-1px);
+}
+
+.gastoFijoPagado {
+  background: color-mix(in srgb, var(--color-success, #22c55e) 14%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-success, #22c55e) 40%, transparent);
+  color: var(--color-text-primary);
+}
+
+.gastoFijoPendiente {
+  background: color-mix(in srgb, #f97316 12%, var(--color-surface));
+  border-color: color-mix(in srgb, #f97316 35%, transparent);
+  color: var(--color-text-primary);
+}
+
+.gastoFijoIcono {
+  font-size: 0.9rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.gastoFijoNombre {
+  white-space: nowrap;
+}
+
+.gastoFijoNombreTachado {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.gastoFijoDesactivado {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+  opacity: 0.55;
+}
+
+.gastoFijoToggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  padding: 0 0.1rem;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.gastoFijoToggle:hover {
+  opacity: 1;
+}
+
+.gastoFijoMonto {
+  font-size: 0.78rem;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.gastoFijoBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #f97316;
+  opacity: 0.85;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 680px) {
+  .gastosFijosGrid {
+    gap: 0.4rem;
+  }
+
+  .gastoFijoChip {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.65rem;
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import TablaMovimientos from '../components/TablaMovimientos';
@@ -6,6 +6,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
 import VistaMensual from '../components/VistaMensual';
 import { useCategorias } from '../hooks/useCategorias';
+import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from './Dashboard.module.css';
 
 const normalizeMeses = (payload) => {
@@ -48,6 +49,75 @@ export default function Dashboard() {
 
 	const totalDebito = movimientos.reduce((s, m) => s + Number(m.debito), 0);
 	const totalCredito = movimientos.reduce((s, m) => s + Number(m.credito), 0);
+
+	const [abiertaGastosFijos, setAbiertaGastosFijos] = useState(true);
+
+	const [desactivadosLocal, setDesactivadosLocal] = useState([]);
+
+	useEffect(() => {
+		if (!mesSeleccionado) return;
+		try {
+			setDesactivadosLocal(
+				JSON.parse(
+					localStorage.getItem(`gastos_fijos_disabled_${mesSeleccionado}`) ??
+						'[]',
+				),
+			);
+		} catch {
+			setDesactivadosLocal([]);
+		}
+	}, [mesSeleccionado]);
+
+	const toggleDesactivarGasto = (nombre) => {
+		setDesactivadosLocal((prev) => {
+			const siguiente = prev.includes(nombre)
+				? prev.filter((n) => n !== nombre)
+				: [...prev, nombre];
+			localStorage.setItem(
+				`gastos_fijos_disabled_${mesSeleccionado}`,
+				JSON.stringify(siguiente),
+			);
+			return siguiente;
+		});
+	};
+
+	const estadoGastosFijos = useMemo(() => {
+		return GASTOS_FIJOS.map((gasto) => {
+			const desactivado = desactivadosLocal.includes(gasto.nombre);
+			// Prioridad 1: campo gasto_fijo guardado en BD — suma todos los que coincidan
+			const movsPorCampo = movimientos.filter(
+				(m) => Number(m.debito) > 0 && m.gasto_fijo === gasto.nombre,
+			);
+			if (movsPorCampo.length > 0) {
+				return {
+					nombre: gasto.nombre,
+					pagado: true,
+					monto: movsPorCampo.reduce((s, m) => s + Number(m.debito), 0),
+					porCampo: true,
+					desactivado,
+				};
+			}
+			// Prioridad 2: fallback por keywords — suma todos los que coincidan
+			const movsPorKeyword = movimientos.filter((m) => {
+				if (Number(m.debito) <= 0) return false;
+				const desc = (' ' + (m.descripcion ?? '') + ' ').toLowerCase();
+				const dep = (' ' + (m.dependencia ?? '') + ' ').toLowerCase();
+				return gasto.keywords.some(
+					(kw) => desc.includes(kw) || dep.includes(kw),
+				);
+			});
+			return {
+				nombre: gasto.nombre,
+				pagado: movsPorKeyword.length > 0,
+				monto:
+					movsPorKeyword.length > 0
+						? movsPorKeyword.reduce((s, m) => s + Number(m.debito), 0)
+						: null,
+				porCampo: false,
+				desactivado,
+			};
+		});
+	}, [movimientos, desactivadosLocal]);
 
 	const cargarMeses = async ({ mesPreferido = '' } = {}) => {
 		const { data } = await api.get('/movimientos/meses');
@@ -129,6 +199,12 @@ export default function Dashboard() {
 				return m;
 			});
 		});
+	};
+
+	const handleGastoFijoChange = (id, gastoFijo) => {
+		setMovimientos((prev) =>
+			prev.map((m) => (m.id === id ? { ...m, gasto_fijo: gastoFijo } : m)),
+		);
 	};
 
 	const formatMes = (m) => {
@@ -464,6 +540,101 @@ export default function Dashboard() {
 					)}
 				</div>
 
+				{/* Panel: Gastos fijos del mes */}
+				<div className={`${styles.bloqueCargas} ${styles.bloqueGastosFijos}`}>
+					<button
+						type='button'
+						className={styles.bloqueTitulo}
+						onClick={() => setAbiertaGastosFijos((v) => !v)}
+					>
+						<span>
+							Gastos fijos — {mesSeleccionado ? formatMes(mesSeleccionado) : ''}
+						</span>
+						<span className={styles.gastosFijosResumenHeader}>
+							{(() => {
+								const activos = estadoGastosFijos.filter((g) => !g.desactivado);
+								const pagados = activos.filter((g) => g.pagado).length;
+								const total = activos.length;
+								const montoTotal = activos
+									.filter((g) => g.pagado && g.monto !== null)
+									.reduce((s, g) => s + g.monto, 0);
+								return (
+									<>
+										<span
+											className={
+												pagados === total
+													? styles.gastosFijosContadorOk
+													: styles.gastosFijosContadorPendiente
+											}
+										>
+											{pagados}/{total} pagados
+										</span>
+										{montoTotal > 0 && (
+											<span className={styles.gastosFijosMontoTotal}>
+												$
+												{montoTotal.toLocaleString('es-UY', {
+													minimumFractionDigits: 2,
+												})}
+											</span>
+										)}
+									</>
+								);
+							})()}
+							<span className={styles.chevronBloque}>
+								{abiertaGastosFijos ? '▲' : '▼'}
+							</span>
+						</span>
+					</button>
+					{abiertaGastosFijos && (
+						<div className={styles.gastosFijosGrid}>
+							{estadoGastosFijos.map((g) => (
+								<div
+									key={g.nombre}
+									className={`${styles.gastoFijoChip} ${
+										g.desactivado
+											? styles.gastoFijoDesactivado
+											: g.pagado
+												? styles.gastoFijoPagado
+												: styles.gastoFijoPendiente
+									}`}
+								>
+									<span className={styles.gastoFijoIcono}>
+										{g.pagado ? '✅' : '⚠️'}
+									</span>
+									<span
+										className={`${styles.gastoFijoNombre} ${g.desactivado ? styles.gastoFijoNombreTachado : ''}`}
+									>
+										{g.nombre}
+									</span>
+									{g.pagado && g.monto !== null && (
+										<span className={styles.gastoFijoMonto}>
+											$
+											{g.monto.toLocaleString('es-UY', {
+												minimumFractionDigits: 2,
+											})}
+										</span>
+									)}
+									{!g.pagado && (
+										<span className={styles.gastoFijoBadge}>
+											{g.desactivado ? 'No aplica' : 'Pendiente'}
+										</span>
+									)}
+									<button
+										type='button'
+										title={
+											g.desactivado ? 'Activar este mes' : 'No aplica este mes'
+										}
+										className={styles.gastoFijoToggle}
+										onClick={() => toggleDesactivarGasto(g.nombre)}
+									>
+										{g.desactivado ? '+' : '×'}
+									</button>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
 				{/* Panel: botones de cambio de Vistas */}
 				<div className={styles.controles}>
 					<div className={styles.toggleVista}>
@@ -564,6 +735,7 @@ export default function Dashboard() {
 								onCategoriaChange={handleCategoriaChange}
 								categorias={categorias}
 								guardarCategoria={guardarCategoria}
+								onGastoFijoChange={handleGastoFijoChange}
 							/>
 						) : (
 							<VistaCategorias

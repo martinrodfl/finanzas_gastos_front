@@ -55,6 +55,20 @@
   min-width: 170px;
 }
 
+.gastoFijoCol {
+  min-width: 155px;
+}
+
+.gastoFijoAsignado {
+  color: var(--color-success, #22c55e);
+  font-weight: 600;
+  border-color: color-mix(in srgb, var(--color-success, #22c55e) 40%, transparent);
+}
+
+.gastoFijoVacio {
+  color: var(--color-text-muted);
+}
+
 .selectorWrap {
   display: flex;
   flex-direction: column;

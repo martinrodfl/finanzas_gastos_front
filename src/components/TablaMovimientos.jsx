@@ -5,6 +5,7 @@ import {
 	ICONO_CATEGORIA_DEFAULT,
 	ICONOS_CATEGORIA,
 } from '../utils/categoriaIconos';
+import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import api from '../api/client';
 
 export default function TablaMovimientos({
@@ -12,6 +13,7 @@ export default function TablaMovimientos({
 	onCategoriaChange,
 	categorias: todasCategoriasBase,
 	guardarCategoria: guardarPersonalizada,
+	onGastoFijoChange,
 }) {
 	const [editorNuevaPorId, setEditorNuevaPorId] = useState({});
 	const [textoNuevaPorId, setTextoNuevaPorId] = useState({});
@@ -46,6 +48,12 @@ export default function TablaMovimientos({
 			categoria,
 		});
 		onCategoriaChange?.(id, data ?? { categoria_manual: categoria });
+	};
+
+	const cambiarGastoFijo = async (id, gastoFijo) => {
+		const valor = gastoFijo || null;
+		await api.patch(`/movimientos/${id}/gasto-fijo`, { gasto_fijo: valor });
+		onGastoFijoChange?.(id, valor);
 	};
 
 	const activarEditorNueva = (id) => {
@@ -86,8 +94,8 @@ export default function TablaMovimientos({
 					<tr>
 						<th>Fecha</th>
 						<th>Descripción</th>
-						<th>Categoría</th>
-						<th>Asunto</th>
+						<th>Categoría</th>{' '}
+						<th className={styles.gastoFijoCol}>Gasto fijo</th> <th>Asunto</th>
 						<th className={styles.monto}>Egreso</th>
 						<th className={styles.monto}>Ingreso</th>
 					</tr>
@@ -180,6 +188,23 @@ export default function TablaMovimientos({
 										</div>
 									)}
 								</div>
+							</td>
+							<td className={styles.gastoFijoCol}>
+								<select
+									value={m.gasto_fijo ?? ''}
+									onChange={(e) => cambiarGastoFijo(m.id, e.target.value)}
+									className={`${styles.selectCategoria} ${m.gasto_fijo ? styles.gastoFijoAsignado : styles.gastoFijoVacio}`}
+								>
+									<option value=''>— Sin asignar —</option>
+									{GASTOS_FIJOS.map((g) => (
+										<option
+											key={g.nombre}
+											value={g.nombre}
+										>
+											{g.nombre}
+										</option>
+									))}
+								</select>
 							</td>
 							<td className={styles.dependencia}>{m.asunto ?? '—'}</td>
 							<td className={`${styles.monto} ${styles.debito}`}>
