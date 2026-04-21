@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import styles from './VistaMensual.module.css';
 
+/**
+ * Normaliza la respuesta del endpoint GET /movimientos/resumen.
+ * El backend puede devolver el array directamente, o envuelto en { resumen } o { data }.
+ *
+ * @param {unknown} payload
+ * @returns {Array} Array de objetos { mes, total_debito, total_credito }
+ */
 const normalizeResumen = (payload) => {
 	if (Array.isArray(payload)) return payload;
 	if (Array.isArray(payload?.resumen)) return payload.resumen;
@@ -9,6 +16,17 @@ const normalizeResumen = (payload) => {
 	return [];
 };
 
+/**
+ * Calcula la escala del eje Y del gráfico de barras.
+ *
+ * Divide el rango en `segmentos` partes iguales y redondea el paso al valor
+ * "bonito" más cercano (1, 2, 5, 10, 20, 50, 100...) para que las marcas
+ * del eje sean legibles y no queden en números arbitrarios.
+ *
+ * @param {number} maxValor - Valor máximo de la serie (egresos o ingresos)
+ * @param {number} [segmentos=5] - Cantidad de divisiones del eje
+ * @returns {{ maxEscala: number, marcas: number[] }}
+ */
 const construirEscala = (maxValor, segmentos = 5) => {
 	if (maxValor <= 0) {
 		return { maxEscala: 1, marcas: [1, 0.8, 0.6, 0.4, 0.2, 0] };
@@ -34,6 +52,14 @@ const construirEscala = (maxValor, segmentos = 5) => {
 	return { maxEscala, marcas };
 };
 
+/**
+ * Gráfico de evolución mensual de egresos e ingresos.
+ *
+ * Obtiene el resumen anual del endpoint GET /movimientos/resumen y muestra:
+ *   1. Tarjetas de totales globales (egresos, ingresos, balance).
+ *   2. Gráfico de barras con eje Y dinámico calculado por construirEscala().
+ *   3. Tabla con proporciones porcentuales por mes.
+ */
 export default function VistaMensual() {
 	const [datos, setDatos] = useState([]);
 	const [loading, setLoading] = useState(true);

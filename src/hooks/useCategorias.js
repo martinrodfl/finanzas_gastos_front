@@ -11,6 +11,14 @@ const LOCAL_MAP = new Map(
 let _cache = null;
 let _inflight = null;
 
+/**
+ * Obtiene las categorías personalizadas del backend y las enriquece con
+ * los datos locales (color, palabras clave) usando LOCAL_MAP.
+ *
+ * Implementa un patrón de caché + inflight para evitar llamadas duplicadas
+ * en StrictMode: si ya hay una petición en vuelo (_inflight), devuelve
+ * la misma promesa; si ya hay resultado cacheado (_cache), lo devuelve directo.
+ */
 function fetchCategorias() {
 	if (_cache) return Promise.resolve(_cache);
 	if (_inflight) return _inflight;
@@ -36,6 +44,19 @@ function fetchCategorias() {
 	return _inflight;
 }
 
+/**
+ * Hook que provee la lista de categorías disponibles.
+ *
+ * Combina las categorías locales predefinidas (CATEGORIAS + CATEGORIA_OTROS)
+ * con las personalizadas almacenadas en el backend. Las locales se usan
+ * como fallback inmediato para evitar un flash vacío en el render inicial.
+ *
+ * Usa un caché a nivel de módulo (_cache/_inflight) para evitar múltiples
+ * peticiones en paralelo, lo que ocurre en React StrictMode por el doble
+ * montaje de componentes en desarrollo.
+ *
+ * @returns {{ categorias: Array, cargando: boolean, guardar: Function, recargar: Function }}
+ */
 export function useCategorias() {
 	// Inicializar con categorías locales como fallback inmediato (sin flash vacío)
 	const [categorias, setCategorias] = useState(() => [
@@ -44,6 +65,10 @@ export function useCategorias() {
 	]);
 	const [cargando, setCargando] = useState(true);
 
+	/**
+	 * Dispara fetchCategorias() y actualiza el estado local.
+	 * Si falla, el fallback local (inicializado en useState) permanece.
+	 */
 	const cargar = useCallback(async () => {
 		try {
 			setCargando(true);
@@ -57,6 +82,13 @@ export function useCategorias() {
 	}, []);
 
 	// Guarda una categoría nueva (patron = null) en el backend
+	/**
+	 * Crea o actualiza una categoría personalizada en el backend.
+	 * Invalida el caché de módulo para forzar un re-fetch en el próximo uso.
+	 *
+	 * @param {string} nombre
+	 * @param {string} icono
+	 */
 	const guardar = useCallback(
 		async (nombre, icono) => {
 			try {

@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Hook que expone el ancho actual de la ventana y lo actualiza en cada resize.
+ * Se usa para aplicar layouts responsivos dinámicamente desde el componente
+ * sin depender solo de media queries CSS.
+ *
+ * @returns {{ width: number }}
+ */
 export const useViewport = () => {
 	const [width, setWidth] = useState(window.innerWidth);
 

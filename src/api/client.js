@@ -1,3 +1,12 @@
+/**
+ * Cliente HTTP para comunicarse con el backend Laravel.
+ *
+ * - Agrega automáticamente el header Authorization con el token de localStorage.
+ * - Maneja FormData (multipart) y JSON transparentemente.
+ * - En respuestas 401, elimina el token y redirige a /login.
+ * - Normaliza los errores HTTP en objetos con .response.status y .response.data.
+ */
+
 const rawBaseUrl =
 	import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 const baseURL = rawBaseUrl.replace(/\/+$/, '');
@@ -5,6 +14,14 @@ const baseURL = rawBaseUrl.replace(/\/+$/, '');
 const isFormData = (value) =>
 	typeof FormData !== 'undefined' && value instanceof FormData;
 
+/**
+ * Construye la URL completa a partir del path y los query params.
+ * Ignora parámetros null, undefined o string vacío para no ensuciar la URL.
+ *
+ * @param {string} path - Ruta relativa (ej: '/movimientos')
+ * @param {object} [params] - Query params a agregar
+ * @returns {string} URL absoluta
+ */
 const buildUrl = (path, params) => {
 	const safePath = path.startsWith('/') ? path : `/${path}`;
 	const url = new URL(`${baseURL}${safePath}`);
@@ -19,6 +36,13 @@ const buildUrl = (path, params) => {
 	return url.toString();
 };
 
+/**
+ * Normaliza una respuesta HTTP errónea en un Error con .response adjunto.
+ * Intenta parsear el cuerpo como JSON; si no puede, lo trata como texto plano.
+ *
+ * @param {Response} response - Respuesta fetch con status >= 400
+ * @returns {Promise<Error>}
+ */
 const buildError = async (response) => {
 	let data = null;
 
@@ -45,6 +69,21 @@ const buildError = async (response) => {
 	return error;
 };
 
+/**
+ * Función base para todos los métodos HTTP.
+ *
+ * - Si el body es FormData, deja que el navegador establezca el Content-Type
+ *   (multipart/form-data con boundary correcto).
+ * - Si es un objeto, lo serializa como JSON y agrega el header correspondiente.
+ * - En respuesta 204 (No Content), devuelve { data: null }.
+ * - En respuesta 401, limpia el token y fuerza redirect a /login.
+ *
+ * @param {'GET'|'POST'|'PUT'|'PATCH'|'DELETE'} method
+ * @param {string} path
+ * @param {object|FormData|null} [body]
+ * @param {{ params?: object, headers?: object }} [config]
+ * @returns {Promise<{ data: unknown }>}
+ */
 const request = async (method, path, body, config = {}) => {
 	const token = localStorage.getItem('token');
 	const headers = {

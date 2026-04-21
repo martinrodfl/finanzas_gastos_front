@@ -1,3 +1,11 @@
+/**
+ * Lista de gastos fijos mensuales que la app trackea automáticamente.
+ *
+ * Cada entrada tiene:
+ *   - nombre: identificador único que se guarda en el campo gasto_fijo del movimiento.
+ *   - keywords: términos (en minúsculas) a buscar en la descripción o dependencia
+ *     del movimiento como detección automática (fallback si no hay campo explícito).
+ */
 export const GASTOS_FIJOS = [
 	{ nombre: 'Alquiler', keywords: ['alquiler', 'arrendamiento'] },
 	{ nombre: 'Internet', keywords: ['internet'] },

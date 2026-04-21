@@ -1,5 +1,12 @@
 import { ICONO_CATEGORIA_DEFAULT } from './categoriaIconos';
 
+/**
+ * Definición de categorías predefinidas del sistema.
+ *
+ * Cada categoría tiene un color CSS (variable del tema), un ícono emoji
+ * y un array de palabras clave (en mayúsculas) para detección automática
+ * por coincidencia en la descripción del movimiento.
+ */
 export const CATEGORIAS = [
 	{
 		nombre: 'Alimentacion/Supermercado',
@@ -170,6 +177,7 @@ export const CATEGORIAS = [
 	},
 ];
 
+/** Categoría de fallback cuando ninguna palabra clave coincide con la descripción. */
 export const CATEGORIA_OTROS = {
 	nombre: 'Otros',
 	color: 'var(--color-category-otros)',
@@ -177,6 +185,14 @@ export const CATEGORIA_OTROS = {
 	palabras: ['Retiro Red: REDBROU', 'Retiro Red: REDPAGOS', 'RETIRO RED'],
 };
 
+/**
+ * Crea un objeto de categoría personalizada con valores por defecto.
+ * Se usa cuando el usuario ingresa un nombre nuevo que no existe en CATEGORIAS.
+ *
+ * @param {string} [nombre]
+ * @param {string|null} [iconoElegido]
+ * @returns {{ nombre: string, color: string, icono: string, palabras: string[] }}
+ */
 export function crearCategoriaPersonalizada(nombre = '', iconoElegido = null) {
 	const nombreLimpio = nombre.trim();
 	const icono = iconoElegido || ICONO_CATEGORIA_DEFAULT;
@@ -189,6 +205,14 @@ export function crearCategoriaPersonalizada(nombre = '', iconoElegido = null) {
 	};
 }
 
+/**
+ * Determina la categoría de un movimiento por coincidencia de palabras clave.
+ * Recorre CATEGORIAS en orden y retorna la primera que coincida.
+ * Si ninguna coincide, retorna CATEGORIA_OTROS.
+ *
+ * @param {string} descripcion - Descripción del movimiento (mayúsculas o minúsculas)
+ * @returns {{ nombre: string, color: string, icono: string, palabras: string[] }}
+ */
 export function categorizar(descripcion = '') {
 	const desc = descripcion.toUpperCase();
 	for (const cat of CATEGORIAS) {
@@ -199,10 +223,27 @@ export function categorizar(descripcion = '') {
 	return CATEGORIA_OTROS;
 }
 
+/**
+ * Devuelve todas las categorías predefinidas (CATEGORIAS + CATEGORIA_OTROS).
+ *
+ * @returns {Array}
+ */
 export function getCategorias() {
 	return [...CATEGORIAS, CATEGORIA_OTROS];
 }
 
+/**
+ * Combina las categorías base con las que aparecen en los movimientos.
+ * Si un nombre del array no existe en categorías base, se crea como
+ * categoría personalizada con valores por defecto.
+ *
+ * Esto permite que los movimientos con categorias_manuales o categorias_regla
+ * distintas a las predefinidas siempre tengan un objeto de categoría válido.
+ *
+ * @param {Array} categoriasBase - Categorías conocidas
+ * @param {(string|null|undefined)[]} nombres - Nombres extraídos de los movimientos
+ * @returns {Array}
+ */
 export function combinarCategoriasConPersonalizadas(
 	categoriasBase,
 	nombres = [],

@@ -12,6 +12,20 @@ import { useViewport } from '../hooks/useViewport';
 import api from '../api/client';
 import styles from './VistaCategorias.module.css';
 
+/**
+ * Vista de movimientos agrupados por categoría.
+ *
+ * Muestra cada categoría como un acordeón expandible con barra de progreso
+ * proporcional al gasto total, y permite reclasificar movimientos individuales
+ * o crear categorías nuevas directamente desde la vista.
+ *
+ * @param {{
+ *   movimientos: Array,
+ *   onCategoriaChange: (id: number, payload) => void,
+ *   categorias: Array<{ nombre: string, icono: string, color: string }>,
+ *   guardarCategoria: (nombre: string, icono: string) => Promise<void>
+ * }} props
+ */
 export default function VistaCategorias({
 	movimientos,
 	onCategoriaChange,
@@ -20,11 +34,16 @@ export default function VistaCategorias({
 }) {
 	const [expandido, setExpandido] = useState(null);
 	const [guardando, setGuardando] = useState(null);
-	const [editorNuevaPorId, setEditorNuevaPorId] = useState({});
-	const [textoNuevaPorId, setTextoNuevaPorId] = useState({});
-	const [iconoNuevaPorId, setIconoNuevaPorId] = useState({});
+	// Mapas por ID de movimiento para el editor inline de "nueva categoría"
+	const [editorCatAbiertoPorId, setEditorCatAbiertoPorId] = useState({});
+	const [nombreNuevaCatPorId, setNombreNuevaCatPorId] = useState({});
+	const [iconoNuevaCatPorId, setIconoNuevaCatPorId] = useState({});
 	const { width } = useViewport();
 
+	/**
+	 * Combina las categorías base (locales) con las que aparecen en los movimientos
+	 * (pueden incluir personalizadas creadas por el usuario).
+	 */
 	const todasCategorias = useMemo(() => {
 		const nombresCategorias = movimientos.flatMap((m) => [
 			m.categoria_manual,
@@ -36,6 +55,15 @@ export default function VistaCategorias({
 		);
 	}, [movimientos, todasCategoriasBase]);
 
+	/**
+	 * Resuelve la categoría de un movimiento aplicando tres niveles de prioridad:
+	 *   1. categoria_manual: asignada manualmente por el usuario (máxima prioridad).
+	 *   2. categoria_regla: asignada por regla automática del backend.
+	 *   3. Fallback: categorización local por keywords de la descripción.
+	 *
+	 * @param {object} mov - Movimiento a clasificar
+	 * @returns {{ nombre: string, icono: string, color: string }} Categoría resuelta
+	 */
 	const resolverCategoria = useCallback(
 		(mov) => {
 			const nombreManual = String(mov.categoria_manual ?? '').trim();
@@ -59,6 +87,12 @@ export default function VistaCategorias({
 		[todasCategorias],
 	);
 
+	/**
+	 * Construye el mapa de grupos por categoría a partir de todos los movimientos.
+	 * Primero crea una entrada vacía para cada categoría conocida (para mantener
+	 * el orden), luego asigna cada movimiento a su grupo. Filtra los grupos
+	 * sin movimientos y los ordena por mayor débito.
+	 */
 	const grupos = useMemo(() => {
 		const mapa = new Map();
 		for (const cat of todasCategorias) {
@@ -92,6 +126,10 @@ export default function VistaCategorias({
 			.sort((a, b) => b.totalDebito - a.totalDebito);
 	}, [movimientos, resolverCategoria, todasCategorias]);
 
+	/**
+	 * Envía el cambio de categoría al backend y notifica al padre.
+	 * Muestra un spinner por fila mientras se procesa la petición.
+	 */
 	const cambiarCategoria = async (id, categoria) => {
 		setGuardando(id);
 		try {
@@ -104,36 +142,49 @@ export default function VistaCategorias({
 		}
 	};
 
+	/** Abre el editor inline para crear una categoría nueva en la fila indicada. */
 	const activarEditorNueva = (id) => {
-		setEditorNuevaPorId((prev) => ({ ...prev, [id]: true }));
-		setIconoNuevaPorId((prev) => ({
+		setEditorCatAbiertoPorId((prev) => ({ ...prev, [id]: true }));
+		setIconoNuevaCatPorId((prev) => ({
 			...prev,
 			[id]: prev[id] ?? ICONO_CATEGORIA_DEFAULT,
 		}));
 	};
 
+	/** Cierra el editor inline y limpia nombre e ícono para la fila indicada. */
 	const cancelarEditorNueva = (id) => {
-		setEditorNuevaPorId((prev) => ({ ...prev, [id]: false }));
-		setTextoNuevaPorId((prev) => ({ ...prev, [id]: '' }));
-		setIconoNuevaPorId((prev) => ({ ...prev, [id]: ICONO_CATEGORIA_DEFAULT }));
+		setEditorCatAbiertoPorId((prev) => ({ ...prev, [id]: false }));
+		setNombreNuevaCatPorId((prev) => ({ ...prev, [id]: '' }));
+		setIconoNuevaCatPorId((prev) => ({
+			...prev,
+			[id]: ICONO_CATEGORIA_DEFAULT,
+		}));
 	};
 
+	/**
+	 * Guarda la nueva categoría en el backend y la asigna al movimiento.
+	 *
+	 * @param {number} id - ID del movimiento al que se asignará la categoría creada
+	 */
 	const guardarNuevaCategoria = async (id) => {
-		const nombre = (textoNuevaPorId[id] ?? '').trim();
+		const nombre = (nombreNuevaCatPorId[id] ?? '').trim();
 		if (!nombre) return;
 		await guardarPersonalizada(
 			nombre,
-			iconoNuevaPorId[id] ?? ICONO_CATEGORIA_DEFAULT,
+			iconoNuevaCatPorId[id] ?? ICONO_CATEGORIA_DEFAULT,
 		);
 		await cambiarCategoria(id, nombre);
 		cancelarEditorNueva(id);
 	};
 
+	/** Base para calcular el porcentaje de barra de cada categoría. */
 	const totalDebitoGlobal =
 		grupos.reduce((sum, g) => sum + g.totalDebito, 0) || 1;
 
+	/** Formatea moneda UY. */
 	const fmt = (n) =>
 		`$ ${n.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
+	/** Convierte fecha ISO a DD/MM/YYYY. */
 	const fmtFecha = (f) => {
 		const [y, m, d] = f.split('-');
 		return `${d}/${m}/${y}`;
@@ -256,14 +307,14 @@ export default function VistaCategorias({
 																+ Nueva categoría
 															</option>
 														</select>
-														{editorNuevaPorId[m.id] && !cargando && (
+														{editorCatAbiertoPorId[m.id] && !cargando && (
 															<div className={styles.nuevaCategoriaRow}>
 																<input
 																	type='text'
 																	placeholder='Nombre de categoría'
-																	value={textoNuevaPorId[m.id] ?? ''}
+																	value={nombreNuevaCatPorId[m.id] ?? ''}
 																	onChange={(e) =>
-																		setTextoNuevaPorId((prev) => ({
+																		setNombreNuevaCatPorId((prev) => ({
 																			...prev,
 																			[m.id]: e.target.value,
 																		}))
@@ -278,11 +329,11 @@ export default function VistaCategorias({
 																/>
 																<select
 																	value={
-																		iconoNuevaPorId[m.id] ??
+																		iconoNuevaCatPorId[m.id] ??
 																		ICONO_CATEGORIA_DEFAULT
 																	}
 																	onChange={(e) =>
-																		setIconoNuevaPorId((prev) => ({
+																		setIconoNuevaCatPorId((prev) => ({
 																			...prev,
 																			[m.id]: e.target.value,
 																		}))

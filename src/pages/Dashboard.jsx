@@ -1,14 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import CargaManual from '../components/CargaManual';
+import GastosFijos from '../components/GastosFijos';
+import ImportadorExcel from '../components/ImportadorExcel';
 import TablaMovimientos from '../components/TablaMovimientos';
 import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
 import VistaMensual from '../components/VistaMensual';
 import { useCategorias } from '../hooks/useCategorias';
-import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from './Dashboard.module.css';
 
+/**
+ * Normaliza la respuesta del endpoint GET /movimientos/meses.
+ * El backend puede devolver el array directamente, o envuelto en { meses } o { data }.
+ *
+ * @param {unknown} payload
+ * @returns {string[]} Array de meses en formato YYYY-MM
+ */
 const normalizeMeses = (payload) => {
 	if (Array.isArray(payload)) return payload;
 	if (Array.isArray(payload?.meses)) return payload.meses;
@@ -16,108 +25,37 @@ const normalizeMeses = (payload) => {
 	return [];
 };
 
+/**
+ * Panel principal de la aplicación. Orquesta la carga de datos, el selector
+ * de mes, las vistas de movimientos y los sub-paneles de importación, carga
+ * manual y gastos fijos.
+ */
 export default function Dashboard() {
+	// -- Estado de datos --
 	const [movimientos, setMovimientos] = useState([]);
 	const [meses, setMeses] = useState([]);
 	const [mesSeleccionado, setMesSeleccionado] = useState('');
-	const [loading, setLoading] = useState(true);
-	const [loadingMes, setLoadingMes] = useState(false);
-	const [archivoExcel, setArchivoExcel] = useState(null);
-	const [importandoExcel, setImportandoExcel] = useState(false);
-	const [mensajeImport, setMensajeImport] = useState('');
-	const [errorImport, setErrorImport] = useState('');
-	const [resumenImport, setResumenImport] = useState(null);
-	const [guardandoManual, setGuardandoManual] = useState(false);
-	const [mensajeManual, setMensajeManual] = useState('');
-	const [errorManual, setErrorManual] = useState('');
+	const [loading, setLoading] = useState(true);        // Carga inicial del primer mes
+	const [loadingMes, setLoadingMes] = useState(false); // Carga al cambiar de mes
+
+	// -- Estado de UI --
+	const [vista, setVista] = useState('tabla'); // 'tabla' | 'categorias' | 'mensual'
 	const [abiertaCargas, setAbiertaCargas] = useState(false);
-	const [manualForm, setManualForm] = useState(() => {
-		const hoy = new Date().toISOString().slice(0, 10);
-		return {
-			fecha: hoy,
-			tipo: 'egreso',
-			descripcion: '',
-			dependencia: '',
-			documento: '',
-			categoria: 'Otros',
-			monto: '',
-		};
-	});
-	const [vista, setVista] = useState('tabla');
+
 	const navigate = useNavigate();
 	const { categorias, guardar: guardarCategoria } = useCategorias();
 
+	// Totales del mes actual derivados de los movimientos cargados
 	const totalDebito = movimientos.reduce((s, m) => s + Number(m.debito), 0);
 	const totalCredito = movimientos.reduce((s, m) => s + Number(m.credito), 0);
 
-	const [abiertaGastosFijos, setAbiertaGastosFijos] = useState(true);
-
-	const [desactivadosLocal, setDesactivadosLocal] = useState([]);
-
-	useEffect(() => {
-		if (!mesSeleccionado) return;
-		try {
-			setDesactivadosLocal(
-				JSON.parse(
-					localStorage.getItem(`gastos_fijos_disabled_${mesSeleccionado}`) ??
-						'[]',
-				),
-			);
-		} catch {
-			setDesactivadosLocal([]);
-		}
-	}, [mesSeleccionado]);
-
-	const toggleDesactivarGasto = (nombre) => {
-		setDesactivadosLocal((prev) => {
-			const siguiente = prev.includes(nombre)
-				? prev.filter((n) => n !== nombre)
-				: [...prev, nombre];
-			localStorage.setItem(
-				`gastos_fijos_disabled_${mesSeleccionado}`,
-				JSON.stringify(siguiente),
-			);
-			return siguiente;
-		});
-	};
-
-	const estadoGastosFijos = useMemo(() => {
-		return GASTOS_FIJOS.map((gasto) => {
-			const desactivado = desactivadosLocal.includes(gasto.nombre);
-			// Prioridad 1: campo gasto_fijo guardado en BD — suma todos los que coincidan
-			const movsPorCampo = movimientos.filter(
-				(m) => Number(m.debito) > 0 && m.gasto_fijo === gasto.nombre,
-			);
-			if (movsPorCampo.length > 0) {
-				return {
-					nombre: gasto.nombre,
-					pagado: true,
-					monto: movsPorCampo.reduce((s, m) => s + Number(m.debito), 0),
-					porCampo: true,
-					desactivado,
-				};
-			}
-			// Prioridad 2: fallback por keywords — suma todos los que coincidan
-			const movsPorKeyword = movimientos.filter((m) => {
-				if (Number(m.debito) <= 0) return false;
-				const desc = (' ' + (m.descripcion ?? '') + ' ').toLowerCase();
-				const dep = (' ' + (m.dependencia ?? '') + ' ').toLowerCase();
-				return gasto.keywords.some(
-					(kw) => desc.includes(kw) || dep.includes(kw),
-				);
-			});
-			return {
-				nombre: gasto.nombre,
-				pagado: movsPorKeyword.length > 0,
-				monto:
-					movsPorKeyword.length > 0
-						? movsPorKeyword.reduce((s, m) => s + Number(m.debito), 0)
-						: null,
-				porCampo: false,
-				desactivado,
-			};
-		});
-	}, [movimientos, desactivadosLocal]);
+	/**
+	 * Obtiene la lista de meses con movimientos desde el backend y carga los
+	 * movimientos del mes elegido (o el último disponible si no se especifica).
+	 * Se usa tanto en el montaje inicial como después de importar o guardar.
+	 *
+	 * @param {{ mesPreferido?: string }} [opts]
+	 */
 
 	const cargarMeses = async ({ mesPreferido = '' } = {}) => {
 		const { data } = await api.get('/movimientos/meses');
@@ -137,6 +75,8 @@ export default function Dashboard() {
 				? mesPreferido
 				: ultimoMes;
 
+		// Si el mes a mostrar ya está seleccionado, el useEffect de mesSeleccionado
+		// no se disparará (el valor no cambia), así que forzamos la recarga aquí.
 		if (siguienteMes === mesSeleccionado) {
 			setLoading(true);
 			api
@@ -149,6 +89,7 @@ export default function Dashboard() {
 		setMesSeleccionado(siguienteMes);
 	};
 
+	// Carga inicial de meses al montar el componente
 	useEffect(() => {
 		cargarMeses().catch(() => {
 			setLoading(false);
@@ -156,6 +97,7 @@ export default function Dashboard() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	// Cada vez que cambia el mes seleccionado, carga sus movimientos
 	useEffect(() => {
 		if (!mesSeleccionado) return;
 		api
@@ -167,11 +109,23 @@ export default function Dashboard() {
 			});
 	}, [mesSeleccionado]);
 
+	/** Cierra la sesión eliminando el token y redirige al login. */
 	const salir = () => {
 		localStorage.removeItem('token');
 		navigate('/login');
 	};
 
+	/**
+	 * Actualiza el estado local de un movimiento cuando el usuario cambia su categoría.
+	 *
+	 * Si la nueva categoría no es null (es decir, fue asignada manualmente), la propaga
+	 * como `categoria_regla` a todos los demás movimientos con la misma descripción.
+	 * Esto permite categorizar en batch movimientos repetidos (mismo comercio).
+	 *
+	 * @param {number} id - ID del movimiento modificado
+	 * @param {string | { categoria_manual: string | null, debito?: number, credito?: number }} payload
+	 *   Puede recibir la categoría como string simple o como objeto con la respuesta del backend.
+	 */
 	const handleCategoriaChange = (id, payload) => {
 		const categoria =
 			typeof payload === 'string'
@@ -201,12 +155,20 @@ export default function Dashboard() {
 		});
 	};
 
+	/**
+	 * Actualiza el campo `gasto_fijo` de un movimiento en el estado local
+	 * después de que el PATCH al backend fue exitoso.
+	 *
+	 * @param {number} id - ID del movimiento
+	 * @param {string | null} gastoFijo - Nombre del gasto fijo asignado, o null para limpiar
+	 */
 	const handleGastoFijoChange = (id, gastoFijo) => {
 		setMovimientos((prev) =>
 			prev.map((m) => (m.id === id ? { ...m, gasto_fijo: gastoFijo } : m)),
 		);
 	};
 
+	/** Formatea un mes YYYY-MM a nombre legible en español (ej: "abril 2026"). */
 	const formatMes = (m) => {
 		const [year, month] = m.split('-');
 		const fecha = new Date(Number(year), Number(month) - 1);
@@ -219,106 +181,6 @@ export default function Dashboard() {
 	const handleMesChange = (e) => {
 		setLoadingMes(true);
 		setMesSeleccionado(e.target.value);
-	};
-
-	const handleArchivoChange = (e) => {
-		const archivo = e.target.files?.[0] ?? null;
-		setArchivoExcel(archivo);
-		setMensajeImport('');
-		setErrorImport('');
-		setResumenImport(null);
-	};
-
-	const handleImportarExcel = async () => {
-		if (!archivoExcel) {
-			setErrorImport('Seleccioná un archivo Excel antes de importar.');
-			return;
-		}
-
-		setImportandoExcel(true);
-		setMensajeImport('');
-		setErrorImport('');
-		setResumenImport(null);
-
-		try {
-			const formData = new FormData();
-			formData.append('file', archivoExcel);
-
-			const { data } = await api.post('/movimientos/import', formData, {
-				headers: {
-					'Content-Type': 'multipart/form-data',
-				},
-			});
-
-			setMensajeImport(data?.message ?? 'Importación completada.');
-			setResumenImport(data?.resumen ?? null);
-			setArchivoExcel(null);
-			await cargarMeses({ mesPreferido: mesSeleccionado });
-		} catch (error) {
-			const mensaje =
-				error?.response?.data?.error ??
-				error?.response?.data?.message ??
-				'No se pudo importar el archivo.';
-			setErrorImport(mensaje);
-		} finally {
-			setImportandoExcel(false);
-		}
-	};
-
-	const handleManualChange = (e) => {
-		const { name, value } = e.target;
-		setManualForm((prev) => ({ ...prev, [name]: value }));
-		setMensajeManual('');
-		setErrorManual('');
-	};
-
-	const handleGuardarManual = async (e) => {
-		e.preventDefault();
-
-		if (
-			!manualForm.fecha ||
-			!manualForm.descripcion.trim() ||
-			!manualForm.monto
-		) {
-			setErrorManual('Completá fecha, descripción y monto.');
-			return;
-		}
-
-		setGuardandoManual(true);
-		setMensajeManual('');
-		setErrorManual('');
-
-		try {
-			const payload = {
-				fecha: manualForm.fecha,
-				tipo: manualForm.tipo,
-				descripcion: manualForm.descripcion.trim(),
-				dependencia: manualForm.dependencia.trim() || null,
-				documento: manualForm.documento.trim() || null,
-				categoria: manualForm.categoria || null,
-				monto: Number(manualForm.monto),
-			};
-
-			await api.post('/movimientos', payload);
-			setMensajeManual('Movimiento manual guardado correctamente.');
-			setManualForm((prev) => ({
-				...prev,
-				descripcion: '',
-				dependencia: '',
-				documento: '',
-				monto: '',
-			}));
-
-			const mesNuevo = manualForm.fecha.slice(0, 7);
-			await cargarMeses({ mesPreferido: mesNuevo || mesSeleccionado });
-		} catch (error) {
-			const mensaje =
-				error?.response?.data?.message ??
-				'No se pudo guardar el movimiento manual.';
-			setErrorManual(mensaje);
-		} finally {
-			setGuardandoManual(false);
-		}
 	};
 
 	return (
@@ -351,291 +213,28 @@ export default function Dashboard() {
 					</button>
 					{abiertaCargas && (
 						<div className={styles.cargasGrid}>
-							{/* Panel: Importar Excel */}
-							<div className={styles.importadorExcel}>
-								<h3 className={styles.panelTitulo}>Importar desde Excel</h3>
-								<div className={styles.importadorControles}>
-									<input
-										id='archivo-excel-input'
-										type='file'
-										accept='.xlsx,.xls'
-										onChange={handleArchivoChange}
-										className={styles.fileInput}
-									/>
-									<label
-										htmlFor='archivo-excel-input'
-										className={`${styles.btnAccion} ${styles.btnExaminar}`}
-									>
-										<span className={styles.iconoBoton}>📁</span>
-										<span>Examinar</span>
-									</label>
-									<input
-										type='text'
-										className={styles.archivoInputPreview}
-										value={archivoExcel?.name ?? 'Ningún archivo seleccionado'}
-										readOnly
-										aria-label='Archivo seleccionado'
-									/>
-									<button
-										type='button'
-										onClick={handleImportarExcel}
-										disabled={importandoExcel}
-										className={`${styles.btnAccion} ${styles.btnImportar}`}
-									>
-										<span className={styles.iconoBoton}>⬆</span>
-										<span>
-											{importandoExcel ? 'Importando...' : 'Cargar Excel'}
-										</span>
-									</button>
-								</div>
-								{archivoExcel && (
-									<p className={styles.archivoSeleccionado}>
-										Archivo: {archivoExcel.name}
-									</p>
-								)}
-								{mensajeImport && (
-									<p className={styles.mensajeImport}>{mensajeImport}</p>
-								)}
-								{resumenImport && (
-									<div className={styles.resumenImport}>
-										<span>
-											Total filas: <strong>{resumenImport.total_filas}</strong>
-										</span>
-										<span>
-											Guardados: <strong>{resumenImport.guardados}</strong>
-										</span>
-										<span>
-											Duplicados: <strong>{resumenImport.duplicados}</strong>
-										</span>
-										<span>
-											Vacíos omitidos:{' '}
-											<strong>{resumenImport.omitidos_vacios}</strong>
-										</span>
-										{resumenImport.periodo?.desde && (
-											<span>
-												Período: <strong>{resumenImport.periodo.desde}</strong>{' '}
-												→ <strong>{resumenImport.periodo.hasta}</strong>
-											</span>
-										)}
-									</div>
-								)}
-								{errorImport && (
-									<p className={styles.errorImport}>{errorImport}</p>
-								)}
-							</div>
-
-							{/* Panel: Carga manual */}
-							<div className={styles.cargaManual}>
-								<h3 className={styles.panelTitulo}>Cargar gasto manual</h3>
-								<form
-									onSubmit={handleGuardarManual}
-									className={styles.manualForm}
-								>
-									<div className={styles.manualRow3}>
-										<label>
-											Fecha
-											<input
-												type='date'
-												name='fecha'
-												value={manualForm.fecha}
-												onChange={handleManualChange}
-												required
-											/>
-										</label>
-										<label>
-											Tipo
-											<select
-												name='tipo'
-												value={manualForm.tipo}
-												onChange={handleManualChange}
-											>
-												<option value='egreso'>Egreso</option>
-												<option value='ingreso'>Ingreso</option>
-											</select>
-										</label>
-										<label>
-											Monto
-											<input
-												type='number'
-												name='monto'
-												value={manualForm.monto}
-												onChange={handleManualChange}
-												min='0.01'
-												step='0.01'
-												placeholder='0.00'
-												required
-											/>
-										</label>
-									</div>
-
-									<label>
-										Descripción
-										<input
-											type='text'
-											name='descripcion'
-											value={manualForm.descripcion}
-											onChange={handleManualChange}
-											placeholder='Ej: Almacen barrio'
-											required
-										/>
-									</label>
-
-									<div className={styles.manualRow2}>
-										<label>
-											Dependencia
-											<input
-												type='text'
-												name='dependencia'
-												value={manualForm.dependencia}
-												onChange={handleManualChange}
-												placeholder='Opcional'
-											/>
-										</label>
-										<label>
-											Documento
-											<input
-												type='text'
-												name='documento'
-												value={manualForm.documento}
-												onChange={handleManualChange}
-												placeholder='Opcional'
-											/>
-										</label>
-									</div>
-
-									<label>
-										Categoría
-										<select
-											name='categoria'
-											value={manualForm.categoria}
-											onChange={handleManualChange}
-										>
-											{categorias.map((cat) => (
-												<option
-													key={cat.nombre}
-													value={cat.nombre}
-												>
-													{cat.icono} {cat.nombre}
-												</option>
-											))}
-										</select>
-									</label>
-
-									<button
-										type='submit'
-										disabled={guardandoManual}
-										className={styles.btnGuardarManual}
-									>
-										{guardandoManual ? 'Guardando...' : 'Guardar movimiento'}
-									</button>
-									{mensajeManual && (
-										<p className={styles.mensajeImport}>{mensajeManual}</p>
-									)}
-									{errorManual && (
-										<p className={styles.errorImport}>{errorManual}</p>
-									)}
-								</form>
-							</div>
+							<ImportadorExcel
+								onImportado={({ mesPreferido }) =>
+									cargarMeses({ mesPreferido })
+								}
+							/>
+							<CargaManual
+								categorias={categorias}
+								onGuardado={(mesNuevo) =>
+									cargarMeses({ mesPreferido: mesNuevo || mesSeleccionado })
+								}
+							/>
 						</div>
 					)}
 				</div>
 
-				{/* Panel: Gastos fijos del mes */}
-				<div className={`${styles.bloqueCargas} ${styles.bloqueGastosFijos}`}>
-					<button
-						type='button'
-						className={styles.bloqueTitulo}
-						onClick={() => setAbiertaGastosFijos((v) => !v)}
-					>
-						<span>
-							Gastos fijos — {mesSeleccionado ? formatMes(mesSeleccionado) : ''}
-						</span>
-						<span className={styles.gastosFijosResumenHeader}>
-							{(() => {
-								const activos = estadoGastosFijos.filter((g) => !g.desactivado);
-								const pagados = activos.filter((g) => g.pagado).length;
-								const total = activos.length;
-								const montoTotal = activos
-									.filter((g) => g.pagado && g.monto !== null)
-									.reduce((s, g) => s + g.monto, 0);
-								return (
-									<>
-										<span
-											className={
-												pagados === total
-													? styles.gastosFijosContadorOk
-													: styles.gastosFijosContadorPendiente
-											}
-										>
-											{pagados}/{total} pagados
-										</span>
-										{montoTotal > 0 && (
-											<span className={styles.gastosFijosMontoTotal}>
-												$
-												{montoTotal.toLocaleString('es-UY', {
-													minimumFractionDigits: 2,
-												})}
-											</span>
-										)}
-									</>
-								);
-							})()}
-							<span className={styles.chevronBloque}>
-								{abiertaGastosFijos ? '▲' : '▼'}
-							</span>
-						</span>
-					</button>
-					{abiertaGastosFijos && (
-						<div className={styles.gastosFijosGrid}>
-							{estadoGastosFijos.map((g) => (
-								<div
-									key={g.nombre}
-									className={`${styles.gastoFijoChip} ${
-										g.desactivado
-											? styles.gastoFijoDesactivado
-											: g.pagado
-												? styles.gastoFijoPagado
-												: styles.gastoFijoPendiente
-									}`}
-								>
-									<span className={styles.gastoFijoIcono}>
-										{g.pagado ? '✅' : '⚠️'}
-									</span>
-									<span
-										className={`${styles.gastoFijoNombre} ${g.desactivado ? styles.gastoFijoNombreTachado : ''}`}
-									>
-										{g.nombre}
-									</span>
-									{g.pagado && g.monto !== null && (
-										<span className={styles.gastoFijoMonto}>
-											$
-											{g.monto.toLocaleString('es-UY', {
-												minimumFractionDigits: 2,
-											})}
-										</span>
-									)}
-									{!g.pagado && (
-										<span className={styles.gastoFijoBadge}>
-											{g.desactivado ? 'No aplica' : 'Pendiente'}
-										</span>
-									)}
-									<button
-										type='button'
-										title={
-											g.desactivado ? 'Activar este mes' : 'No aplica este mes'
-										}
-										className={styles.gastoFijoToggle}
-										onClick={() => toggleDesactivarGasto(g.nombre)}
-									>
-										{g.desactivado ? '+' : '×'}
-									</button>
-								</div>
-							))}
-						</div>
-					)}
-				</div>
+				{/* Acordeón de gastos fijos: detecta pagos automáticamente y por campo BD */}
+				<GastosFijos
+					movimientos={movimientos}
+					mesSeleccionado={mesSeleccionado}
+				/>
 
-				{/* Panel: botones de cambio de Vistas */}
+				{/* Selector de vista y período */}
 				<div className={styles.controles}>
 					<div className={styles.toggleVista}>
 						<button
@@ -685,6 +284,7 @@ export default function Dashboard() {
 				</div>
 
 				{/* Panel: Cards de totales */}
+				{/* Tarjetas de resumen del mes (ocultas en vista anual porque VistaMensual tiene las suyas) */}
 				{vista !== 'mensual' && (
 					<div className={styles.resumen}>
 						<div className={`${styles.tarjeta} ${styles.debito}`}>
@@ -717,6 +317,7 @@ export default function Dashboard() {
 					</div>
 				)}
 
+				{/* Contenido dinámico según la vista activa */}
 				{vista === 'mensual' ? (
 					<VistaMensual />
 				) : loading ? (

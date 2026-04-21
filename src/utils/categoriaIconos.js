@@ -1,5 +1,10 @@
+/** Ícono por defecto para categorías personalizadas sin ícono asignado. */
 export const ICONO_CATEGORIA_DEFAULT = '🏷';
 
+/**
+ * Catálogo de iconos disponibles para asignar a categorías.
+ * Se usa en el selector de ícono al crear o editar una categoría personalizada.
+ */
 export const ICONOS_CATEGORIA = [
 	{ icono: '🛒', nombre: 'Alimentacion/Supermercado' },
 	{ icono: '⚡', nombre: 'Servicios' },

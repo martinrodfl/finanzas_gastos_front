@@ -33,6 +33,14 @@ const applyTheme = (theme) => {
 	document.documentElement.style.colorScheme = theme;
 };
 
+/**
+ * Proveedor del contexto de tema (claro/oscuro).
+ *
+ * Lee la preferencia guardada en localStorage (clave: 'finanzas-theme').
+ * Si no hay ninguna, usa la preferencia del sistema (prefers-color-scheme).
+ * Al cambiar el tema, actualiza document.documentElement.dataset.theme
+ * para que las variables CSS del tema se apliquen correctamente.
+ */
 export function ThemeProvider({ children }) {
 	const [theme, setTheme] = useState(() => {
 		const initialTheme = getInitialTheme();
