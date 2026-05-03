@@ -348,6 +348,21 @@
   font-weight: 700;
 }
 
+.tarjetaSub {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  margin-top: 0.2rem;
+}
+
+.tarjetaSubImpuestos {
+  color: var(--color-danger);
+}
+
+.tarjetaSubNeto {
+  color: var(--color-success);
+}
+
 .debito {
   border-color: var(--color-danger);
 }

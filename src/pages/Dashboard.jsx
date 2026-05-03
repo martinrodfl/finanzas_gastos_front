@@ -9,6 +9,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
 import VistaMensual from '../components/VistaMensual';
 import { useCategorias } from '../hooks/useCategorias';
+import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from './Dashboard.module.css';
 
 /**
@@ -35,7 +36,7 @@ export default function Dashboard() {
 	const [movimientos, setMovimientos] = useState([]);
 	const [meses, setMeses] = useState([]);
 	const [mesSeleccionado, setMesSeleccionado] = useState('');
-	const [loading, setLoading] = useState(true);        // Carga inicial del primer mes
+	const [loading, setLoading] = useState(true); // Carga inicial del primer mes
 	const [loadingMes, setLoadingMes] = useState(false); // Carga al cambiar de mes
 
 	// -- Estado de UI --
@@ -48,6 +49,31 @@ export default function Dashboard() {
 	// Totales del mes actual derivados de los movimientos cargados
 	const totalDebito = movimientos.reduce((s, m) => s + Number(m.debito), 0);
 	const totalCredito = movimientos.reduce((s, m) => s + Number(m.credito), 0);
+
+	// Gastos deducibles del ingreso bruto: BPS, DGI y Contadora
+	// Usa la misma lógica de 2 prioridades que GastosFijos.jsx:
+	// 1. campo gasto_fijo explícito en BD, 2. fallback por keywords
+	const NOMBRES_DEDUCIBLES = ['BPS', 'DGI', 'Contadora'];
+	const gastosDeducibles = GASTOS_FIJOS.filter((g) =>
+		NOMBRES_DEDUCIBLES.includes(g.nombre),
+	);
+	const totalDeducibles = gastosDeducibles.reduce((total, gasto) => {
+		const porCampo = movimientos.filter(
+			(m) => Number(m.debito) > 0 && m.gasto_fijo === gasto.nombre,
+		);
+		if (porCampo.length > 0) {
+			return total + porCampo.reduce((s, m) => s + Number(m.debito), 0);
+		}
+		const porKeyword = movimientos.filter((m) => {
+			if (Number(m.debito) <= 0) return false;
+			const desc = (' ' + (m.descripcion ?? '') + ' ').toLowerCase();
+			const dep = (' ' + (m.dependencia ?? '') + ' ').toLowerCase();
+			return gasto.keywords.some((kw) => desc.includes(kw) || dep.includes(kw));
+		});
+		return total + porKeyword.reduce((s, m) => s + Number(m.debito), 0);
+	}, 0);
+	const ingresoNeto =
+		totalCredito > 0 ? Math.max(0, totalCredito - totalDeducibles) : 0;
 
 	/**
 	 * Obtiene la lista de meses con movimientos desde el backend y carga los
@@ -295,6 +321,14 @@ export default function Dashboard() {
 									minimumFractionDigits: 2,
 								})}
 							</strong>
+							<p
+								className={`${styles.tarjetaSub} ${styles.tarjetaSubImpuestos}`}
+							>
+								Impuestos(BPS, DGI, Contadora): ${' '}
+								{totalDeducibles.toLocaleString('es-UY', {
+									minimumFractionDigits: 2,
+								})}
+							</p>
 						</div>
 						<div className={`${styles.tarjeta} ${styles.credito}`}>
 							<span>Total ingresos</span>
@@ -304,6 +338,12 @@ export default function Dashboard() {
 									minimumFractionDigits: 2,
 								})}
 							</strong>
+							<p className={`${styles.tarjetaSub} ${styles.tarjetaSubNeto}`}>
+								Neto: ${' '}
+								{ingresoNeto.toLocaleString('es-UY', {
+									minimumFractionDigits: 2,
+								})}
+							</p>
 						</div>
 						<div className={`${styles.tarjeta} ${styles.saldo}`}>
 							<span>Diferencia</span>
