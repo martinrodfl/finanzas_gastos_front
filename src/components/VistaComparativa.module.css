@@ -1,0 +1,107 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cargando {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 3rem;
+}
+
+.wrapper {
+  background: var(--color-surface);
+  border-radius: 10px;
+  box-shadow: var(--color-shadow-card);
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.tabla thead tr {
+  background: var(--color-surface-tertiary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.thCategoria {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  position: sticky;
+  left: 0;
+  background: var(--color-surface-tertiary);
+  min-width: 190px;
+  z-index: 1;
+}
+
+.thMes {
+  padding: 0.85rem 0.75rem;
+  text-align: right;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.tabla tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.1s ease;
+}
+
+.tabla tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.tdCategoria {
+  padding: 0.7rem 1rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  background: var(--color-surface);
+  z-index: 1;
+}
+
+.tabla tbody tr:hover .tdCategoria {
+  background: var(--color-surface-hover);
+}
+
+.tdMonto {
+  padding: 0.7rem 0.75rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.cero {
+  color: var(--color-text-muted);
+}
+
+.totalRow {
+  background: var(--color-surface-tertiary);
+  border-top: 2px solid var(--color-border);
+}
+
+.totalRow .tdCategoria {
+  background: var(--color-surface-tertiary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+}
+
+.totalRow .tdMonto {
+  font-weight: 700;
+  color: var(--color-danger);
+}

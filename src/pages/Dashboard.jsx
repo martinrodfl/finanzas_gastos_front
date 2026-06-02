@@ -7,6 +7,7 @@ import ImportadorExcel from '../components/ImportadorExcel';
 import TablaMovimientos from '../components/TablaMovimientos';
 import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
+import VistaComparativa from '../components/VistaComparativa';
 import VistaMensual from '../components/VistaMensual';
 import { useCategorias } from '../hooks/useCategorias';
 import { GASTOS_FIJOS } from '../utils/gastosFijos';
@@ -40,7 +41,7 @@ export default function Dashboard() {
 	const [loadingMes, setLoadingMes] = useState(false); // Carga al cambiar de mes
 
 	// -- Estado de UI --
-	const [vista, setVista] = useState('tabla'); // 'tabla' | 'categorias' | 'mensual'
+	const [vista, setVista] = useState('tabla'); // 'tabla' | 'categorias' | 'mensual' | 'comparativa'
 	const [abiertaCargas, setAbiertaCargas] = useState(false);
 
 	const navigate = useNavigate();
@@ -287,9 +288,19 @@ export default function Dashboard() {
 						>
 							Gastos Por Año
 						</button>
+						<button
+							className={
+								vista === 'comparativa'
+									? styles.toggleActivo
+									: styles.toggleBtn
+							}
+							onClick={() => setVista('comparativa')}
+						>
+							Comparativa Por Categoría
+						</button>
 					</div>
 
-					{vista !== 'mensual' && (
+					{vista !== 'mensual' && vista !== 'comparativa' && (
 						<div className={styles.filtroMes}>
 							<label>Período</label>
 							<select
@@ -310,8 +321,8 @@ export default function Dashboard() {
 				</div>
 
 				{/* Panel: Cards de totales */}
-				{/* Tarjetas de resumen del mes (ocultas en vista anual porque VistaMensual tiene las suyas) */}
-				{vista !== 'mensual' && (
+				{/* Tarjetas de resumen del mes (ocultas en vista anual y comparativa) */}
+				{vista !== 'mensual' && vista !== 'comparativa' && (
 					<div className={styles.resumen}>
 						<div className={`${styles.tarjeta} ${styles.debito}`}>
 							<span>Total egresos</span>
@@ -358,7 +369,9 @@ export default function Dashboard() {
 				)}
 
 				{/* Contenido dinámico según la vista activa */}
-				{vista === 'mensual' ? (
+				{vista === 'comparativa' ? (
+					<VistaComparativa />
+				) : vista === 'mensual' ? (
 					<VistaMensual />
 				) : loading ? (
 					<p className={styles.cargando}>Cargando movimientos...</p>
