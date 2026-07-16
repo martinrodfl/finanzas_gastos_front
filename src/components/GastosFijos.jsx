@@ -31,9 +31,8 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDesactivados(
 				JSON.parse(
-					localStorage.getItem(
-						`gastos_fijos_disabled_${mesSeleccionado}`,
-					) ?? '[]',
+					localStorage.getItem(`gastos_fijos_disabled_${mesSeleccionado}`) ??
+						'[]',
 				),
 			);
 		} catch {
@@ -265,7 +264,9 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 											? styles.timelineItemArriba
 											: styles.timelineItemAbajo
 									}`}
-									style={{ left: `${posicionPct(Number(g.fecha.split('-')[2]))}%` }}
+									style={{
+										left: `${posicionPct(Number(g.fecha.split('-')[2]))}%`,
+									}}
 								>
 									<div
 										className={`${styles.gastoFijoChip} ${styles.gastoFijoChipTimeline} ${styles.gastoFijoPagado}`}
