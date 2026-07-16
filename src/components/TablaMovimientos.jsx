@@ -140,8 +140,9 @@ export default function TablaMovimientos({
 					<tr>
 						<th>Fecha</th>
 						<th>Descripción</th>
-						<th>Categoría</th>{' '}
-						<th className={styles.gastoFijoCol}>Gasto fijo</th> <th>Asunto</th>
+						<th>Categoría</th>
+						<th className={styles.gastoFijoCol}>Gasto fijo</th>
+						<th>Asunto</th>
 						<th className={styles.monto}>Egreso</th>
 						<th className={styles.monto}>Ingreso</th>
 					</tr>

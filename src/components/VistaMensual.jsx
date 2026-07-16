@@ -2,13 +2,6 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import styles from './VistaMensual.module.css';
 
-/**
- * Normaliza la respuesta del endpoint GET /movimientos/resumen.
- * El backend puede devolver el array directamente, o envuelto en { resumen } o { data }.
- *
- * @param {unknown} payload
- * @returns {Array} Array de objetos { mes, total_debito, total_credito }
- */
 const normalizeResumen = (payload) => {
 	if (Array.isArray(payload)) return payload;
 	if (Array.isArray(payload?.resumen)) return payload.resumen;
@@ -16,17 +9,6 @@ const normalizeResumen = (payload) => {
 	return [];
 };
 
-/**
- * Calcula la escala del eje Y del gráfico de barras.
- *
- * Divide el rango en `segmentos` partes iguales y redondea el paso al valor
- * "bonito" más cercano (1, 2, 5, 10, 20, 50, 100...) para que las marcas
- * del eje sean legibles y no queden en números arbitrarios.
- *
- * @param {number} maxValor - Valor máximo de la serie (egresos o ingresos)
- * @param {number} [segmentos=5] - Cantidad de divisiones del eje
- * @returns {{ maxEscala: number, marcas: number[] }}
- */
 const construirEscala = (maxValor, segmentos = 5) => {
 	if (maxValor <= 0) {
 		return { maxEscala: 1, marcas: [1, 0.8, 0.6, 0.4, 0.2, 0] };
@@ -52,17 +34,25 @@ const construirEscala = (maxValor, segmentos = 5) => {
 	return { maxEscala, marcas };
 };
 
-/**
- * Gráfico de evolución mensual de egresos e ingresos.
- *
- * Obtiene el resumen anual del endpoint GET /movimientos/resumen y muestra:
- *   1. Tarjetas de totales globales (egresos, ingresos, balance).
- *   2. Gráfico de barras con eje Y dinámico calculado por construirEscala().
- *   3. Tabla con proporciones porcentuales por mes.
- */
+const TIPOS_GRAFICO = [
+	{ id: 'barras', label: 'Barras' },
+	{ id: 'lineas', label: 'L\u00edneas' },
+	{ id: 'area', label: '\u00c1rea' },
+];
+
+// Dimensiones del SVG (unidades de viewBox)
+const SVG_W = 700;
+const SVG_H = 240;
+const AXIS_W = 50;
+const PAD_R = 10;
+const PAD_T = 8;
+const PAD_B = 28;
+const PLOT_H = SVG_H - PAD_T - PAD_B;
+
 export default function VistaMensual() {
 	const [datos, setDatos] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [tipoGrafico, setTipoGrafico] = useState('barras');
 
 	useEffect(() => {
 		api
@@ -86,6 +76,14 @@ export default function VistaMensual() {
 		return `$ ${saneado.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
 	};
 
+	/** Formato compacto para etiquetas del eje Y en SVG (evita textos muy largos). */
+	const fmtEje = (n) => {
+		const v = Math.abs(Number(n)) < 1e-6 ? 0 : Number(n);
+		if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+		if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+		return v.toLocaleString('es-UY', { maximumFractionDigits: 0 });
+	};
+
 	const formatMes = (m) => {
 		const [year, month] = m.split('-');
 		const fecha = new Date(Number(year), Number(month) - 1);
@@ -95,39 +93,146 @@ export default function VistaMensual() {
 		});
 	};
 
+	const fmtShort = (m) => {
+		const [y, mo] = m.split('-');
+		return new Date(Number(y), Number(mo) - 1)
+			.toLocaleDateString('es-UY', { month: 'short' })
+			.replace('.', '');
+	};
+
 	const datosAsc = [...datos].reverse();
 	const { maxEscala, marcas } = construirEscala(maxValor);
+	const n = datosAsc.length;
 
 	const totalEgresos = datos.reduce((s, d) => s + Number(d.total_debito), 0);
 	const totalIngresos = datos.reduce((s, d) => s + Number(d.total_credito), 0);
 
-	return (
-		<div className={styles.contenedor}>
-			<div className={styles.resumenGlobal}>
-				<div className={`${styles.pill} ${styles.pillEgreso}`}>
-					<span>Total egresos (todos los meses)</span>
-					<strong>{fmt(totalEgresos)}</strong>
-				</div>
-				<div className={`${styles.pill} ${styles.pillIngreso}`}>
-					<span>Total ingresos (todos los meses)</span>
-					<strong>{fmt(totalIngresos)}</strong>
-				</div>
-				<div className={`${styles.pill} ${styles.pillSaldo}`}>
-					<span>Balance general</span>
-					<strong
-						className={
-							totalIngresos - totalEgresos >= 0
-								? styles.balancePositivo
-								: styles.balanceNegativo
-						}
-					>
-						{fmt(totalIngresos - totalEgresos)}
-					</strong>
-				</div>
-			</div>
+	// Helpers de coordenadas SVG
+	const plotW = SVG_W - AXIS_W - PAD_R;
+	const xOf = (i) => AXIS_W + (n <= 1 ? plotW / 2 : (i * plotW) / (n - 1));
+	const yOf = (val) => PAD_T + PLOT_H - (Math.max(0, val) / maxEscala) * PLOT_H;
+	const baseline = PAD_T + PLOT_H;
 
-			<div className={styles.graficoCard}>
-				<h3 className={styles.graficoTitulo}>Evolución mensual</h3>
+	const egresoPoints = datosAsc
+		.map((d, i) => `${xOf(i)},${yOf(Number(d.total_debito))}`)
+		.join(' ');
+	const ingresoPoints = datosAsc
+		.map((d, i) => `${xOf(i)},${yOf(Number(d.total_credito))}`)
+		.join(' ');
+	const egresoArea = `${xOf(0)},${baseline} ${egresoPoints} ${xOf(n - 1)},${baseline}`;
+	const ingresoArea = `${xOf(0)},${baseline} ${ingresoPoints} ${xOf(n - 1)},${baseline}`;
+
+	const renderSvgChart = (filled) => (
+		<svg
+			viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+			className={styles.svgGrafico}
+			aria-label="Gr\u00e1fico de evoluci\u00f3n mensual"
+		>
+			{/* L\u00edneas gu\u00eda y etiquetas del eje Y */}
+			{marcas.map((valor, i) => {
+				const y = PAD_T + (i / (marcas.length - 1)) * PLOT_H;
+				return (
+					<g key={i}>
+						<line
+							x1={AXIS_W}
+							y1={y}
+							x2={SVG_W - PAD_R}
+							y2={y}
+							className={styles.svgGuia}
+						/>
+						<text
+							x={AXIS_W - 4}
+							y={y + 3}
+							textAnchor="end"
+							fontSize={8}
+							className={styles.svgYLabel}
+						>
+							{fmtEje(valor)}
+						</text>
+					</g>
+				);
+			})}
+
+			{/* L\u00ednea base */}
+			<line
+				x1={AXIS_W}
+				y1={baseline}
+				x2={SVG_W - PAD_R}
+				y2={baseline}
+				className={styles.svgBaseline}
+			/>
+
+			{filled ? (
+				<>
+					<polygon points={egresoArea} className={styles.svgAreaEgreso} />
+					<polygon points={ingresoArea} className={styles.svgAreaIngreso} />
+					<polyline
+						points={egresoPoints}
+						className={styles.svgLineEgreso}
+						fill="none"
+					/>
+					<polyline
+						points={ingresoPoints}
+						className={styles.svgLineIngreso}
+						fill="none"
+					/>
+				</>
+			) : (
+				<>
+					<polyline
+						points={egresoPoints}
+						className={styles.svgLineEgreso}
+						fill="none"
+					/>
+					<polyline
+						points={ingresoPoints}
+						className={styles.svgLineIngreso}
+						fill="none"
+					/>
+				</>
+			)}
+
+			{/* Puntos de datos */}
+			{datosAsc.map((d, i) => (
+				<g key={d.mes}>
+					<circle
+						cx={xOf(i)}
+						cy={yOf(Number(d.total_debito))}
+						r={4}
+						className={styles.svgDotEgreso}
+					>
+						<title>{`${fmtShort(d.mes)} \u2014 Egresos: ${fmt(Number(d.total_debito))}`}</title>
+					</circle>
+					<circle
+						cx={xOf(i)}
+						cy={yOf(Number(d.total_credito))}
+						r={4}
+						className={styles.svgDotIngreso}
+					>
+						<title>{`${fmtShort(d.mes)} \u2014 Ingresos: ${fmt(Number(d.total_credito))}`}</title>
+					</circle>
+				</g>
+			))}
+
+			{/* Etiquetas de mes */}
+			{datosAsc.map((d, i) => (
+				<text
+					key={`lbl-${d.mes}`}
+					x={xOf(i)}
+					y={SVG_H - 5}
+					textAnchor="middle"
+					fontSize={9}
+					className={styles.svgLabel}
+				>
+					{fmtShort(d.mes)}
+				</text>
+			))}
+		</svg>
+	);
+
+	const renderGrafico = () => {
+		if (tipoGrafico === 'barras') {
+			return (
 				<div className={styles.graficoLayout}>
 					<div className={styles.ejeY}>
 						{marcas.map((valor, indice) => (
@@ -181,9 +286,60 @@ export default function VistaMensual() {
 						</div>
 					</div>
 				</div>
+			);
+		}
+		if (tipoGrafico === 'lineas') return renderSvgChart(false);
+		return renderSvgChart(true);
+	};
+
+	return (
+		<div className={styles.contenedor}>
+			<div className={styles.resumenGlobal}>
+				<div className={`${styles.pill} ${styles.pillEgreso}`}>
+					<span>Total egresos (todos los meses)</span>
+					<strong>{fmt(totalEgresos)}</strong>
+				</div>
+				<div className={`${styles.pill} ${styles.pillIngreso}`}>
+					<span>Total ingresos (todos los meses)</span>
+					<strong>{fmt(totalIngresos)}</strong>
+				</div>
+				<div className={`${styles.pill} ${styles.pillSaldo}`}>
+					<span>Balance general</span>
+					<strong
+						className={
+							totalIngresos - totalEgresos >= 0
+								? styles.balancePositivo
+								: styles.balanceNegativo
+						}
+					>
+						{fmt(totalIngresos - totalEgresos)}
+					</strong>
+				</div>
+			</div>
+
+			<div className={styles.graficoCard}>
+				<div className={styles.graficoHeader}>
+					<h3 className={styles.graficoTitulo}>Evoluci\u00f3n mensual</h3>
+					<div className={styles.toggleGrafico}>
+						{TIPOS_GRAFICO.map((t) => (
+							<button
+								key={t.id}
+								className={
+									tipoGrafico === t.id
+										? styles.toggleGraficoActivo
+										: styles.toggleGraficoBtn
+								}
+								onClick={() => setTipoGrafico(t.id)}
+							>
+								{t.label}
+							</button>
+						))}
+					</div>
+				</div>
+				{renderGrafico()}
 				<div className={styles.leyenda}>
-					<span className={styles.leyendaEgreso}>■ Egresos</span>
-					<span className={styles.leyendaIngreso}>■ Ingresos</span>
+					<span className={styles.leyendaEgreso}>&#9632; Egresos</span>
+					<span className={styles.leyendaIngreso}>&#9632; Ingresos</span>
 				</div>
 			</div>
 
@@ -195,7 +351,7 @@ export default function VistaMensual() {
 							<th className={styles.monto}>Egresos</th>
 							<th className={styles.monto}>Ingresos</th>
 							<th className={styles.monto}>Balance</th>
-							<th>Proporción</th>
+							<th>Proporci\u00f3n</th>
 						</tr>
 					</thead>
 					<tbody>

@@ -105,3 +105,17 @@
   font-weight: 700;
   color: var(--color-danger);
 }
+
+.flecha {
+  margin-left: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sube {
+  color: var(--color-danger);
+}
+
+.baja {
+  color: var(--color-success);
+}

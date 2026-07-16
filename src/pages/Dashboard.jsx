@@ -282,21 +282,19 @@ export default function Dashboard() {
 						</button>
 						<button
 							className={
+								vista === 'comparativa' ? styles.toggleActivo : styles.toggleBtn
+							}
+							onClick={() => setVista('comparativa')}
+						>
+							Comparativa Por Categoría
+						</button>
+						<button
+							className={
 								vista === 'mensual' ? styles.toggleActivo : styles.toggleBtn
 							}
 							onClick={() => setVista('mensual')}
 						>
 							Gastos Por Año
-						</button>
-						<button
-							className={
-								vista === 'comparativa'
-									? styles.toggleActivo
-									: styles.toggleBtn
-							}
-							onClick={() => setVista('comparativa')}
-						>
-							Comparativa Por Categoría
 						</button>
 					</div>
 
@@ -335,7 +333,7 @@ export default function Dashboard() {
 							<p
 								className={`${styles.tarjetaSub} ${styles.tarjetaSubImpuestos}`}
 							>
-								Impuestos(BPS, DGI, Contadora): ${' '}
+								Impuestos y Empresa(BPS, DGI, Contadora): ${' '}
 								{totalDeducibles.toLocaleString('es-UY', {
 									minimumFractionDigits: 2,
 								})}

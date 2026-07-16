@@ -72,7 +72,109 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 1.25rem;
+  margin: 0;
+}
+
+.graficoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.toggleGrafico {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.toggleGraficoBtn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.toggleGraficoBtn:hover {
+  background: var(--color-surface-hover);
+}
+
+.toggleGraficoActivo {
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-tertiary);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.svgGrafico {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 0.5rem;
+  overflow: visible;
+}
+
+.svgGuia {
+  stroke: var(--color-border);
+  stroke-width: 0.5;
+}
+
+.svgBaseline {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+}
+
+.svgYLabel {
+  fill: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.svgLabel {
+  fill: var(--color-text-soft);
+  text-transform: capitalize;
+}
+
+.svgLineEgreso {
+  stroke: var(--color-danger);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.svgLineIngreso {
+  stroke: var(--color-success);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.svgAreaEgreso {
+  fill: var(--color-danger-bar);
+  opacity: 0.3;
+}
+
+.svgAreaIngreso {
+  fill: var(--color-success-bar);
+  opacity: 0.3;
+}
+
+.svgDotEgreso {
+  fill: var(--color-danger);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+}
+
+.svgDotIngreso {
+  fill: var(--color-success);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
 }
 
 .graficoLayout {
