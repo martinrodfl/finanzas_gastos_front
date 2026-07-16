@@ -622,7 +622,130 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+  margin-top: 1.75rem;
+}
+
+/* ─── Línea temporal de pagos ─────────────────────────────── */
+.gastosFijosTimelineWrap {
   margin-top: 0.75rem;
+}
+
+.timelineTrack {
+  position: relative;
+  height: 150px;
+  margin: 0 0.5rem 1.25rem;
+}
+
+.timelineAxis {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-border);
+  transform: translateY(-50%);
+}
+
+.timelineTick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 6px;
+  background: var(--color-border);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+.timelineTickLabel {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.timelineTickLabelAlt {
+  top: 19px;
+}
+
+.timelineHoy {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed color-mix(in srgb, var(--color-accent, #6366f1) 60%, transparent);
+  transform: translateX(-50%);
+}
+
+.timelineItem {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.timelineItemArriba {
+  bottom: 50%;
+}
+
+.timelineItemAbajo {
+  top: 50%;
+  flex-direction: column-reverse;
+}
+
+.timelineConnector {
+  width: 1px;
+  height: 14px;
+  background: var(--color-border);
+}
+
+.timelineFecha {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: var(--color-success, #22c55e);
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-success, #22c55e) 55%, transparent);
+}
+
+.timelineDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-success, #22c55e);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success, #22c55e) 30%, transparent);
+  flex-shrink: 0;
+  margin: 2px 0;
+}
+
+.gastoFijoChipTimeline {
+  white-space: nowrap;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.72rem;
+  gap: 0.3rem;
+}
+
+.gastoFijoChipTimeline .gastoFijoIcono {
+  font-size: 0.78rem;
+}
+
+.gastoFijoChipTimeline .gastoFijoMonto {
+  font-size: 0.68rem;
+}
+
+.gastoFijoChipTimeline .gastoFijoToggle {
+  font-size: 0.72rem;
 }
 
 .gastoFijoChip {

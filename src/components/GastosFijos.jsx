@@ -68,6 +68,10 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 	 * Prioridad 2: si no hay coincidencia por campo, busca por keywords en la
 	 *   descripción y dependencia del movimiento (detección automática).
 	 */
+	/** Fecha (YYYY-MM-DD) más temprana entre un listado de movimientos. */
+	const fechaMasTemprana = (movs) =>
+		movs.reduce((min, m) => (!min || m.fecha < min ? m.fecha : min), null);
+
 	const estadoGastosFijos = useMemo(() => {
 		return GASTOS_FIJOS.map((gasto) => {
 			const desactivado = desactivados.includes(gasto.nombre);
@@ -81,6 +85,7 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 					nombre: gasto.nombre,
 					pagado: true,
 					monto: movsPorCampo.reduce((s, m) => s + Number(m.debito), 0),
+					fecha: fechaMasTemprana(movsPorCampo),
 					porCampo: true,
 					desactivado,
 				};
@@ -103,6 +108,8 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 					movsPorKeyword.length > 0
 						? movsPorKeyword.reduce((s, m) => s + Number(m.debito), 0)
 						: null,
+				fecha:
+					movsPorKeyword.length > 0 ? fechaMasTemprana(movsPorKeyword) : null,
 				porCampo: false,
 				desactivado,
 			};
@@ -127,6 +134,69 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 			year: 'numeric',
 		});
 	};
+
+	// Cantidad de días del mes seleccionado, para ubicar cada chip en la línea temporal.
+	const diasEnMes = useMemo(() => {
+		if (!mesSeleccionado) return 30;
+		const [year, month] = mesSeleccionado.split('-').map(Number);
+		return new Date(year, month, 0).getDate();
+	}, [mesSeleccionado]);
+
+	// Día del mes actual, solo si el mes seleccionado es el mes en curso (para marcar "hoy").
+	const diaHoy = useMemo(() => {
+		const hoy = new Date();
+		const hoyMes = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+		return hoyMes === mesSeleccionado ? hoy.getDate() : null;
+	}, [mesSeleccionado]);
+
+	/** Convierte un día del mes (1-31) en un porcentaje de posición horizontal. */
+	const posicionPct = (dia) =>
+		diasEnMes > 1 ? ((dia - 1) / (diasEnMes - 1)) * 100 : 0;
+
+	// Gastos con fecha de pago detectada y activos: se ubican sobre la línea temporal.
+	const conFecha = estadoGastosFijos
+		.filter((g) => g.pagado && g.fecha && !g.desactivado)
+		.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+	// El resto (pendientes, desactivados o sin fecha detectada) se muestra debajo, como antes.
+	const sinFecha = estadoGastosFijos.filter(
+		(g) => !(g.pagado && g.fecha) || g.desactivado,
+	);
+
+	// Marcas de referencia en el eje: todos los días del mes seleccionado.
+	const marcasEje = Array.from({ length: diasEnMes }, (_, i) => i + 1);
+
+	/** Renderiza el contenido interno de un chip (icono, nombre, monto/badge, botón). */
+	const renderChipContenido = (g) => (
+		<>
+			<span className={styles.gastoFijoIcono}>{g.pagado ? '✅' : '⚠️'}</span>
+			<span
+				className={`${styles.gastoFijoNombre} ${
+					g.desactivado ? styles.gastoFijoNombreTachado : ''
+				}`}
+			>
+				{g.nombre}
+			</span>
+			{g.pagado && g.monto !== null && (
+				<span className={styles.gastoFijoMonto}>
+					${g.monto.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+				</span>
+			)}
+			{!g.pagado && (
+				<span className={styles.gastoFijoBadge}>
+					{g.desactivado ? 'No aplica' : 'Pendiente'}
+				</span>
+			)}
+			<button
+				type='button'
+				title={g.desactivado ? 'Activar este mes' : 'No aplica este mes'}
+				className={styles.gastoFijoToggle}
+				onClick={() => toggleDesactivar(g.nombre)}
+			>
+				{g.desactivado ? '+' : '×'}
+			</button>
+		</>
+	);
 
 	return (
 		<div className={`${styles.bloqueCargas} ${styles.bloqueGastosFijos}`}>
@@ -160,56 +230,77 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 			</button>
 
 			{abierta && (
-				<div className={styles.gastosFijosGrid}>
-					{estadoGastosFijos.map((g) => (
-						<div
-							key={g.nombre}
-							className={`${styles.gastoFijoChip} ${
-								g.desactivado
-									? styles.gastoFijoDesactivado
-									: g.pagado
-										? styles.gastoFijoPagado
-										: styles.gastoFijoPendiente
-							}`}
-						>
-							<span className={styles.gastoFijoIcono}>
-								{g.pagado ? '✅' : '⚠️'}
-							</span>
-							<span
-								className={`${styles.gastoFijoNombre} ${
-									g.desactivado ? styles.gastoFijoNombreTachado : ''
-								}`}
-							>
-								{g.nombre}
-							</span>
-							{/* Monto solo si está pagado y fue detectado */}
-							{g.pagado && g.monto !== null && (
-								<span className={styles.gastoFijoMonto}>
-									$
-									{g.monto.toLocaleString('es-UY', {
-										minimumFractionDigits: 2,
-									})}
-								</span>
+				<div className={styles.gastosFijosTimelineWrap}>
+					{/* Línea temporal: chips de gastos pagados ubicados en el día que se pagaron */}
+					{conFecha.length > 0 && (
+						<div className={styles.timelineTrack}>
+							<div className={styles.timelineAxis} />
+							{marcasEje.map((dia) => (
+								<div
+									key={dia}
+									className={styles.timelineTick}
+									style={{ left: `${posicionPct(dia)}%` }}
+								>
+									<span
+										className={`${styles.timelineTickLabel} ${
+											dia % 2 === 0 ? styles.timelineTickLabelAlt : ''
+										}`}
+									>
+										{dia}
+									</span>
+								</div>
+							))}
+							{diaHoy && (
+								<div
+									className={styles.timelineHoy}
+									style={{ left: `${posicionPct(diaHoy)}%` }}
+									title='Hoy'
+								/>
 							)}
-							{/* Badge de estado cuando no está pagado */}
-							{!g.pagado && (
-								<span className={styles.gastoFijoBadge}>
-									{g.desactivado ? 'No aplica' : 'Pendiente'}
-								</span>
-							)}
-							{/* Botón para marcar como "no aplica este mes" o reactivar */}
-							<button
-								type='button'
-								title={
-									g.desactivado ? 'Activar este mes' : 'No aplica este mes'
-								}
-								className={styles.gastoFijoToggle}
-								onClick={() => toggleDesactivar(g.nombre)}
-							>
-								{g.desactivado ? '+' : '×'}
-							</button>
+							{conFecha.map((g, i) => (
+								<div
+									key={g.nombre}
+									className={`${styles.timelineItem} ${
+										i % 2 === 0
+											? styles.timelineItemArriba
+											: styles.timelineItemAbajo
+									}`}
+									style={{ left: `${posicionPct(Number(g.fecha.split('-')[2]))}%` }}
+								>
+									<div
+										className={`${styles.gastoFijoChip} ${styles.gastoFijoChipTimeline} ${styles.gastoFijoPagado}`}
+									>
+										{renderChipContenido(g)}
+									</div>
+									<span className={styles.timelineConnector} />
+									<span className={styles.timelineFecha}>
+										{Number(g.fecha.split('-')[2])}
+									</span>
+									<span className={styles.timelineDot} />
+								</div>
+							))}
 						</div>
-					))}
+					)}
+
+					{/* Pendientes, desactivados o sin fecha detectada: grilla debajo de la línea */}
+					{sinFecha.length > 0 && (
+						<div className={styles.gastosFijosGrid}>
+							{sinFecha.map((g) => (
+								<div
+									key={g.nombre}
+									className={`${styles.gastoFijoChip} ${
+										g.desactivado
+											? styles.gastoFijoDesactivado
+											: g.pagado
+												? styles.gastoFijoPagado
+												: styles.gastoFijoPendiente
+									}`}
+								>
+									{renderChipContenido(g)}
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 			)}
 		</div>
