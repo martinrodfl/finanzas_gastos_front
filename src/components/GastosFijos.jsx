@@ -1,6 +1,53 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from '../pages/Dashboard.module.css';
+
+// Ancho de referencia del track antes de poder medirlo con ResizeObserver.
+const ANCHO_TRACK_FALLBACK = 900;
+// Separación mínima (px) que debe quedar entre dos chips consecutivos en el mismo nivel.
+const SEPARACION_MINIMA_PX = 12;
+// Alto que suma cada nivel extra de apilado (aleja el chip del eje para no tapar al anterior).
+const ALTO_POR_NIVEL_PX = 34;
+
+/**
+ * Estima el ancho en px de un chip a partir de su contenido, para poder
+ * detectar solapamientos sin depender de medir el DOM real de cada chip.
+ */
+const estimarAnchoChip = (g) => {
+	const montoTxt =
+		g.pagado && g.monto !== null
+			? `$${g.monto.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`
+			: '';
+	const caracteres = g.nombre.length + montoTxt.length;
+	// Base: ícono + botón × + paddings + gaps del chip compacto de la línea temporal.
+	return 56 + caracteres * 6.4;
+};
+
+/**
+ * Asigna un "nivel" (0, 1, 2...) a cada item de una lista ordenada por posición
+ * horizontal, de forma que dos items en el mismo nivel nunca se solapen.
+ * Cuando un item colisiona con todos los niveles existentes, se agrega uno nuevo.
+ *
+ * @param {Array<{centroPx: number, anchoPx: number}>} items - ya ordenados por centroPx ascendente
+ * @returns {Array} los mismos items con la propiedad `nivel` agregada
+ */
+const asignarNiveles = (items) => {
+	const finDeNivel = []; // borde derecho ocupado por cada nivel
+	return items.map((item) => {
+		const izquierda = item.centroPx - item.anchoPx / 2;
+		const derecha = item.centroPx + item.anchoPx / 2;
+		let nivel = finDeNivel.findIndex(
+			(fin) => izquierda > fin + SEPARACION_MINIMA_PX,
+		);
+		if (nivel === -1) {
+			nivel = finDeNivel.length;
+			finDeNivel.push(derecha);
+		} else {
+			finDeNivel[nivel] = derecha;
+		}
+		return { ...item, nivel };
+	});
+};
 
 /**
  * Acordeón que muestra el estado de pago de los gastos fijos del mes actual.
@@ -23,6 +70,24 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 
 	// Lista de nombres de gastos marcados como "no aplica" para el mes actual
 	const [desactivados, setDesactivados] = useState([]);
+
+	// Ancho real del track de la línea temporal, medido para evitar solapar chips.
+	const trackRef = useRef(null);
+	const [anchoTrack, setAnchoTrack] = useState(ANCHO_TRACK_FALLBACK);
+
+	useEffect(() => {
+		const el = trackRef.current;
+		if (!el) return;
+		const observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.contentRect.width > 0) {
+					setAnchoTrack(entry.contentRect.width);
+				}
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [abierta]);
 
 	// Recarga los gastos desactivados de localStorage cuando cambia el mes
 	useEffect(() => {
@@ -165,6 +230,43 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 	// Marcas de referencia en el eje: todos los días del mes seleccionado.
 	const marcasEje = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
+	// Reparte los chips con fecha en dos lados (arriba/abajo) y les asigna un
+	// nivel dentro de cada lado para que ninguno tape al anterior.
+	const calcularCentroPx = (g) =>
+		(posicionPct(Number(g.fecha.split('-')[2])) / 100) * anchoTrack;
+
+	const arribaConNivel = asignarNiveles(
+		conFecha
+			.filter((_, i) => i % 2 === 0)
+			.map((g) => ({
+				...g,
+				centroPx: calcularCentroPx(g),
+				anchoPx: estimarAnchoChip(g),
+			})),
+	);
+	const abajoConNivel = asignarNiveles(
+		conFecha
+			.filter((_, i) => i % 2 !== 0)
+			.map((g) => ({
+				...g,
+				centroPx: calcularCentroPx(g),
+				anchoPx: estimarAnchoChip(g),
+			})),
+	);
+
+	const maxNivelArriba = arribaConNivel.reduce(
+		(m, g) => Math.max(m, g.nivel),
+		0,
+	);
+	const maxNivelAbajo = abajoConNivel.reduce((m, g) => Math.max(m, g.nivel), 0);
+	const timelineTrackHeight =
+		150 + (maxNivelArriba + maxNivelAbajo) * ALTO_POR_NIVEL_PX;
+
+	const itemsPosicionados = [
+		...arribaConNivel.map((g) => ({ ...g, lado: 'arriba' })),
+		...abajoConNivel.map((g) => ({ ...g, lado: 'abajo' })),
+	];
+
 	/** Renderiza el contenido interno de un chip (icono, nombre, monto/badge, botón). */
 	const renderChipContenido = (g) => (
 		<>
@@ -232,7 +334,11 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 				<div className={styles.gastosFijosTimelineWrap}>
 					{/* Línea temporal: chips de gastos pagados ubicados en el día que se pagaron */}
 					{conFecha.length > 0 && (
-						<div className={styles.timelineTrack}>
+						<div
+							ref={trackRef}
+							className={styles.timelineTrack}
+							style={{ height: `${timelineTrackHeight}px` }}
+						>
 							<div className={styles.timelineAxis} />
 							{marcasEje.map((dia) => (
 								<div
@@ -256,11 +362,11 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 									title='Hoy'
 								/>
 							)}
-							{conFecha.map((g, i) => (
+							{itemsPosicionados.map((g) => (
 								<div
 									key={g.nombre}
 									className={`${styles.timelineItem} ${
-										i % 2 === 0
+										g.lado === 'arriba'
 											? styles.timelineItemArriba
 											: styles.timelineItemAbajo
 									}`}
@@ -273,7 +379,10 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 									>
 										{renderChipContenido(g)}
 									</div>
-									<span className={styles.timelineConnector} />
+									<span
+										className={styles.timelineConnector}
+										style={{ height: `${14 + g.nivel * ALTO_POR_NIVEL_PX}px` }}
+									/>
 									<span className={styles.timelineFecha}>
 										{Number(g.fecha.split('-')[2])}
 									</span>
