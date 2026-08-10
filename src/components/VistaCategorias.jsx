@@ -9,6 +9,7 @@ import {
 	ICONOS_CATEGORIA,
 } from '../utils/categoriaIconos';
 import { useViewport } from '../hooks/useViewport';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import api from '../api/client';
 import styles from './VistaCategorias.module.css';
 
@@ -39,6 +40,7 @@ export default function VistaCategorias({
 	const [nombreNuevaCatPorId, setNombreNuevaCatPorId] = useState({});
 	const [iconoNuevaCatPorId, setIconoNuevaCatPorId] = useState({});
 	const { width } = useViewport();
+	const { ocultarMontos } = usePrivacidad();
 
 	/**
 	 * Combina las categorías base (locales) con las que aparecen en los movimientos
@@ -183,7 +185,9 @@ export default function VistaCategorias({
 
 	/** Formatea moneda UY. */
 	const fmt = (n) =>
-		`$ ${n.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
+		ocultarMontos
+			? '$ ••••••'
+			: `$ ${n.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
 	/** Convierte fecha ISO a DD/MM/YYYY. */
 	const fmtFecha = (f) => {
 		const [y, m, d] = f.split('-');

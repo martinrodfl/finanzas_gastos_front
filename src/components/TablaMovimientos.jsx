@@ -6,6 +6,7 @@ import {
 	ICONOS_CATEGORIA,
 } from '../utils/categoriaIconos';
 import { GASTOS_FIJOS } from '../utils/gastosFijos';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import api from '../api/client';
 
 /**
@@ -33,6 +34,7 @@ export default function TablaMovimientos({
 	const [editorCatAbiertoPorId, setEditorCatAbiertoPorId] = useState({});
 	const [nombreNuevaCatPorId, setNombreNuevaCatPorId] = useState({});
 	const [iconoNuevaCatPorId, setIconoNuevaCatPorId] = useState({});
+	const { ocultarMontos } = usePrivacidad();
 
 	const categorias = useMemo(() => {
 		const nombresCategorias = movimientos.flatMap((m) => [
@@ -48,7 +50,9 @@ export default function TablaMovimientos({
 	/** Formatea un número como moneda UY (ej: $ 1.234,56) o '—' si es cero. */
 	const fmt = (n) =>
 		n > 0
-			? `$ ${Number(n).toLocaleString('es-UY', { minimumFractionDigits: 2 })}`
+			? ocultarMontos
+				? '$ ••••••'
+				: `$ ${Number(n).toLocaleString('es-UY', { minimumFractionDigits: 2 })}`
 			: '—';
 
 	/** Convierte fecha ISO (YYYY-MM-DD) a formato legible DD/MM/YYYY. */

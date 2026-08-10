@@ -4,12 +4,14 @@ import api from '../api/client';
 import CargaManual from '../components/CargaManual';
 import GastosFijos from '../components/GastosFijos';
 import ImportadorExcel from '../components/ImportadorExcel';
+import MontosToggle from '../components/MontosToggle';
 import TablaMovimientos from '../components/TablaMovimientos';
 import ThemeToggle from '../components/ThemeToggle';
 import VistaCategorias from '../components/VistaCategorias';
 import VistaComparativa from '../components/VistaComparativa';
 import VistaMensual from '../components/VistaMensual';
 import { useCategorias } from '../hooks/useCategorias';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from './Dashboard.module.css';
 
@@ -46,6 +48,13 @@ export default function Dashboard() {
 
 	const navigate = useNavigate();
 	const { categorias, guardar: guardarCategoria } = useCategorias();
+	const { ocultarMontos } = usePrivacidad();
+
+	/** Formatea un monto en pesos, o lo enmascara si el modo privado está activo. */
+	const fmtMonto = (n) =>
+		ocultarMontos
+			? '••••••'
+			: Number(n).toLocaleString('es-UY', { minimumFractionDigits: 2 });
 
 	// Totales del mes actual derivados de los movimientos cargados
 	const totalDebito = movimientos.reduce((s, m) => s + Number(m.debito), 0);
@@ -215,6 +224,7 @@ export default function Dashboard() {
 			<header className={styles.header}>
 				<h1>Finanzas Gastos</h1>
 				<div className={styles.headerAcciones}>
+					<MontosToggle />
 					<ThemeToggle />
 					<button
 						onClick={salir}
@@ -324,44 +334,24 @@ export default function Dashboard() {
 					<div className={styles.resumen}>
 						<div className={`${styles.tarjeta} ${styles.debito}`}>
 							<span>Total egresos</span>
-							<strong>
-								${' '}
-								{totalDebito.toLocaleString('es-UY', {
-									minimumFractionDigits: 2,
-								})}
-							</strong>
+							<strong>$ {fmtMonto(totalDebito)}</strong>
 							<p
 								className={`${styles.tarjetaSub} ${styles.tarjetaSubImpuestos}`}
 							>
 								Impuestos y Empresa(BPS, DGI, Contadora): ${' '}
-								{totalDeducibles.toLocaleString('es-UY', {
-									minimumFractionDigits: 2,
-								})}
+								{fmtMonto(totalDeducibles)}
 							</p>
 						</div>
 						<div className={`${styles.tarjeta} ${styles.credito}`}>
 							<span>Total ingresos</span>
-							<strong>
-								${' '}
-								{totalCredito.toLocaleString('es-UY', {
-									minimumFractionDigits: 2,
-								})}
-							</strong>
+							<strong>$ {fmtMonto(totalCredito)}</strong>
 							<p className={`${styles.tarjetaSub} ${styles.tarjetaSubNeto}`}>
-								Neto: ${' '}
-								{ingresoNeto.toLocaleString('es-UY', {
-									minimumFractionDigits: 2,
-								})}
+								Neto: $ {fmtMonto(ingresoNeto)}
 							</p>
 						</div>
 						<div className={`${styles.tarjeta} ${styles.saldo}`}>
 							<span>Diferencia</span>
-							<strong>
-								${' '}
-								{(totalCredito - totalDebito).toLocaleString('es-UY', {
-									minimumFractionDigits: 2,
-								})}
-							</strong>
+							<strong>$ {fmtMonto(totalCredito - totalDebito)}</strong>
 						</div>
 					</div>
 				)}

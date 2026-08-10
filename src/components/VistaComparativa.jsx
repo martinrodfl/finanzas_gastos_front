@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import styles from './VistaComparativa.module.css';
 
 /**
@@ -14,6 +15,7 @@ import styles from './VistaComparativa.module.css';
 export default function VistaComparativa() {
 	const [datos, setDatos] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const { ocultarMontos } = usePrivacidad();
 
 	useEffect(() => {
 		api
@@ -51,7 +53,10 @@ export default function VistaComparativa() {
 		);
 	}
 
-	const fmt = (n) => n.toLocaleString('es-UY', { minimumFractionDigits: 2 });
+	const fmt = (n) =>
+		ocultarMontos
+			? '••••••'
+			: n.toLocaleString('es-UY', { minimumFractionDigits: 2 });
 
 	/**
 	 * Devuelve flecha y clase CSS según la variación respecto al mes anterior.

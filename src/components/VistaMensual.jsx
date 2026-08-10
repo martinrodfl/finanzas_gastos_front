@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import styles from './VistaMensual.module.css';
 
 const normalizeResumen = (payload) => {
@@ -53,6 +54,7 @@ export default function VistaMensual() {
 	const [datos, setDatos] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [tipoGrafico, setTipoGrafico] = useState('barras');
+	const { ocultarMontos } = usePrivacidad();
 
 	useEffect(() => {
 		api
@@ -72,12 +74,14 @@ export default function VistaMensual() {
 	);
 
 	const fmt = (n) => {
+		if (ocultarMontos) return '$ ••••••';
 		const saneado = Math.abs(Number(n)) < 1e-6 ? 0 : Number(n);
 		return `$ ${saneado.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
 	};
 
 	/** Formato compacto para etiquetas del eje Y en SVG (evita textos muy largos). */
 	const fmtEje = (n) => {
+		if (ocultarMontos) return '•••';
 		const v = Math.abs(Number(n)) < 1e-6 ? 0 : Number(n);
 		if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
 		if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
@@ -126,7 +130,7 @@ export default function VistaMensual() {
 		<svg
 			viewBox={`0 0 ${SVG_W} ${SVG_H}`}
 			className={styles.svgGrafico}
-			aria-label="Gr\u00e1fico de evoluci\u00f3n mensual"
+			aria-label='Gr\u00e1fico de evoluci\u00f3n mensual'
 		>
 			{/* L\u00edneas gu\u00eda y etiquetas del eje Y */}
 			{marcas.map((valor, i) => {
@@ -143,7 +147,7 @@ export default function VistaMensual() {
 						<text
 							x={AXIS_W - 4}
 							y={y + 3}
-							textAnchor="end"
+							textAnchor='end'
 							fontSize={8}
 							className={styles.svgYLabel}
 						>
@@ -164,17 +168,23 @@ export default function VistaMensual() {
 
 			{filled ? (
 				<>
-					<polygon points={egresoArea} className={styles.svgAreaEgreso} />
-					<polygon points={ingresoArea} className={styles.svgAreaIngreso} />
+					<polygon
+						points={egresoArea}
+						className={styles.svgAreaEgreso}
+					/>
+					<polygon
+						points={ingresoArea}
+						className={styles.svgAreaIngreso}
+					/>
 					<polyline
 						points={egresoPoints}
 						className={styles.svgLineEgreso}
-						fill="none"
+						fill='none'
 					/>
 					<polyline
 						points={ingresoPoints}
 						className={styles.svgLineIngreso}
-						fill="none"
+						fill='none'
 					/>
 				</>
 			) : (
@@ -182,12 +192,12 @@ export default function VistaMensual() {
 					<polyline
 						points={egresoPoints}
 						className={styles.svgLineEgreso}
-						fill="none"
+						fill='none'
 					/>
 					<polyline
 						points={ingresoPoints}
 						className={styles.svgLineIngreso}
-						fill="none"
+						fill='none'
 					/>
 				</>
 			)}
@@ -220,7 +230,7 @@ export default function VistaMensual() {
 					key={`lbl-${d.mes}`}
 					x={xOf(i)}
 					y={SVG_H - 5}
-					textAnchor="middle"
+					textAnchor='middle'
 					fontSize={9}
 					className={styles.svgLabel}
 				>

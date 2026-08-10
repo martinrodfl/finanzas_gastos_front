@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePrivacidad } from '../hooks/usePrivacidad';
 import { GASTOS_FIJOS } from '../utils/gastosFijos';
 import styles from '../pages/Dashboard.module.css';
 
@@ -67,6 +68,7 @@ const asignarNiveles = (items) => {
  */
 export default function GastosFijos({ movimientos, mesSeleccionado }) {
 	const [abierta, setAbierta] = useState(true);
+	const { ocultarMontos } = usePrivacidad();
 
 	// Lista de nombres de gastos marcados como "no aplica" para el mes actual
 	const [desactivados, setDesactivados] = useState([]);
@@ -280,7 +282,9 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 			</span>
 			{g.pagado && g.monto !== null && (
 				<span className={styles.gastoFijoMonto}>
-					${g.monto.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+					{ocultarMontos
+						? '$ ••••••'
+						: `$${g.monto.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`}
 				</span>
 			)}
 			{!g.pagado && (
@@ -320,10 +324,12 @@ export default function GastosFijos({ movimientos, mesSeleccionado }) {
 					</span>
 					{montoTotal > 0 && (
 						<span className={styles.gastosFijosMontoTotal}>
-							$
-							{montoTotal.toLocaleString('es-UY', {
-								minimumFractionDigits: 2,
-							})}
+							${' '}
+							{ocultarMontos
+								? '••••••'
+								: montoTotal.toLocaleString('es-UY', {
+										minimumFractionDigits: 2,
+									})}
 						</span>
 					)}
 					<span className={styles.chevronBloque}>{abierta ? '▲' : '▼'}</span>
