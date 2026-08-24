@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import BuscadorMovimientos from '../components/BuscadorMovimientos';
 import CargaManual from '../components/CargaManual';
 import GastosFijos from '../components/GastosFijos';
 import ImportadorExcel from '../components/ImportadorExcel';
@@ -43,7 +44,7 @@ export default function Dashboard() {
 	const [loadingMes, setLoadingMes] = useState(false); // Carga al cambiar de mes
 
 	// -- Estado de UI --
-	const [vista, setVista] = useState('tabla'); // 'tabla' | 'categorias' | 'mensual' | 'comparativa'
+	const [vista, setVista] = useState('tabla'); // 'tabla' | 'categorias' | 'mensual' | 'comparativa' | 'buscar'
 	const [abiertaCargas, setAbiertaCargas] = useState(false);
 
 	const navigate = useNavigate();
@@ -306,58 +307,75 @@ export default function Dashboard() {
 						>
 							Gastos Por Año
 						</button>
+						<button
+							className={
+								vista === 'buscar' ? styles.toggleActivo : styles.toggleBtn
+							}
+							onClick={() => setVista('buscar')}
+						>
+							Buscar
+						</button>
 					</div>
 
-					{vista !== 'mensual' && vista !== 'comparativa' && (
-						<div className={styles.filtroMes}>
-							<label>Período</label>
-							<select
-								value={mesSeleccionado}
-								onChange={handleMesChange}
-							>
-								{meses.map((m) => (
-									<option
-										key={m}
-										value={m}
-									>
-										{formatMes(m)}
-									</option>
-								))}
-							</select>
-						</div>
-					)}
+					{vista !== 'mensual' &&
+						vista !== 'comparativa' &&
+						vista !== 'buscar' && (
+							<div className={styles.filtroMes}>
+								<label>Período</label>
+								<select
+									value={mesSeleccionado}
+									onChange={handleMesChange}
+								>
+									{meses.map((m) => (
+										<option
+											key={m}
+											value={m}
+										>
+											{formatMes(m)}
+										</option>
+									))}
+								</select>
+							</div>
+						)}
 				</div>
 
 				{/* Panel: Cards de totales */}
-				{/* Tarjetas de resumen del mes (ocultas en vista anual y comparativa) */}
-				{vista !== 'mensual' && vista !== 'comparativa' && (
-					<div className={styles.resumen}>
-						<div className={`${styles.tarjeta} ${styles.debito}`}>
-							<span>Total egresos</span>
-							<strong>$ {fmtMonto(totalDebito)}</strong>
-							<p
-								className={`${styles.tarjetaSub} ${styles.tarjetaSubImpuestos}`}
-							>
-								Impuestos y Empresa(BPS, DGI, Contadora): ${' '}
-								{fmtMonto(totalDeducibles)}
-							</p>
+				{/* Tarjetas de resumen del mes (ocultas en vista anual, comparativa y búsqueda) */}
+				{vista !== 'mensual' &&
+					vista !== 'comparativa' &&
+					vista !== 'buscar' && (
+						<div className={styles.resumen}>
+							<div className={`${styles.tarjeta} ${styles.debito}`}>
+								<span>Total egresos</span>
+								<strong>$ {fmtMonto(totalDebito)}</strong>
+								<p
+									className={`${styles.tarjetaSub} ${styles.tarjetaSubImpuestos}`}
+								>
+									Impuestos y Empresa(BPS, DGI, Contadora): ${' '}
+									{fmtMonto(totalDeducibles)}
+								</p>
+							</div>
+							<div className={`${styles.tarjeta} ${styles.credito}`}>
+								<span>Total ingresos</span>
+								<strong>$ {fmtMonto(totalCredito)}</strong>
+								<p className={`${styles.tarjetaSub} ${styles.tarjetaSubNeto}`}>
+									Neto: $ {fmtMonto(ingresoNeto)}
+								</p>
+							</div>
+							<div className={`${styles.tarjeta} ${styles.saldo}`}>
+								<span>Diferencia</span>
+								<strong>$ {fmtMonto(totalCredito - totalDebito)}</strong>
+							</div>
 						</div>
-						<div className={`${styles.tarjeta} ${styles.credito}`}>
-							<span>Total ingresos</span>
-							<strong>$ {fmtMonto(totalCredito)}</strong>
-							<p className={`${styles.tarjetaSub} ${styles.tarjetaSubNeto}`}>
-								Neto: $ {fmtMonto(ingresoNeto)}
-							</p>
-						</div>
-						<div className={`${styles.tarjeta} ${styles.saldo}`}>
-							<span>Diferencia</span>
-							<strong>$ {fmtMonto(totalCredito - totalDebito)}</strong>
-						</div>
-					</div>
-				)}
+					)}
 
 				{/* Contenido dinámico según la vista activa */}
-				{vista === 'comparativa' ? (
+				{vista === 'buscar' ? (
+					<BuscadorMovimientos
+						categorias={categorias}
+						guardarCategoria={guardarCategoria}
+					/>
+				) : vista === 'comparativa' ? (
 					<VistaComparativa />
 				) : vista === 'mensual' ? (
 					<VistaMensual />

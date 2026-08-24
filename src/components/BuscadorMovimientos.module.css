@@ -1,0 +1,131 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  box-shadow: var(--color-shadow-card);
+}
+
+.inputTexto {
+  flex: 1 1 260px;
+  min-width: 220px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  outline: none;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.inputTexto:focus {
+  border-color: var(--color-primary);
+}
+
+.select {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  outline: none;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+.campo input {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.86rem;
+  outline: none;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.campo input:focus {
+  border-color: var(--color-primary);
+}
+
+.inputMonto {
+  width: 110px;
+}
+
+.btnLimpiar {
+  border: 1.5px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnLimpiar:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.contador {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.cargando,
+.vacio {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 3rem;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: 0.5rem 0;
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+}
+
+.btnPagina {
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btnPagina:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.btnPagina:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
