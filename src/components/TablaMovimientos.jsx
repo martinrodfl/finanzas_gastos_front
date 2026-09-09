@@ -20,7 +20,8 @@ import api from '../api/client';
  *   onCategoriaChange: (id: number, payload) => void,
  *   categorias: Array<{ nombre: string, icono: string, color: string }>,
  *   guardarCategoria: (nombre: string, icono: string) => Promise<void>,
- *   onGastoFijoChange: (id: number, gastoFijo: string | null) => void
+ *   onGastoFijoChange: (id: number, gastoFijo: string | null) => void,
+ *   onDetalleChange?: (id: number, payload: { descripcion: string, asunto: string | null }) => void
  * }} props
  */
 export default function TablaMovimientos({
@@ -29,6 +30,7 @@ export default function TablaMovimientos({
 	categorias: todasCategoriasBase,
 	guardarCategoria: guardarPersonalizada,
 	onGastoFijoChange,
+	onDetalleChange,
 }) {
 	// Mapas por ID de movimiento para el editor inline de "nueva categoría"
 	const [editorCatAbiertoPorId, setEditorCatAbiertoPorId] = useState({});
@@ -95,6 +97,33 @@ export default function TablaMovimientos({
 		onGastoFijoChange?.(id, valor);
 	};
 
+	/**
+	 * Guarda un campo de texto (descripción o asunto) al perder el foco, solo si cambió.
+	 *
+	 * @param {number} id
+	 * @param {'descripcion' | 'asunto'} campo
+	 * @param {string} valorAnterior
+	 * @param {string} valorNuevo
+	 */
+	const guardarDetalle = async (id, campo, valorAnterior, valorNuevo) => {
+		const nuevo = valorNuevo.trim();
+		if (nuevo === (valorAnterior ?? '').trim()) return;
+		if (campo === 'descripcion' && !nuevo) return;
+
+		const { data } = await api.patch(`/movimientos/${id}/detalle`, {
+			[campo]: campo === 'asunto' && !nuevo ? null : nuevo,
+		});
+		onDetalleChange?.(id, data);
+	};
+
+	/** Enter guarda igual que blur, sin agregar salto de línea. */
+	const guardarConEnter = (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			e.target.blur();
+		}
+	};
+
 	/** Abre el editor inline para crear una nueva categoría en la fila con el ID dado. */
 	const activarEditorNueva = (id) => {
 		setEditorCatAbiertoPorId((prev) => ({ ...prev, [id]: true }));
@@ -158,7 +187,26 @@ export default function TablaMovimientos({
 							className={m.credito > 0 ? styles.ingreso : ''}
 						>
 							<td className={styles.fecha}>{fmtFecha(m.fecha)}</td>
-							<td>{m.descripcion}</td>
+							{onDetalleChange ? (
+								<td>
+									<input
+										type='text'
+										defaultValue={m.descripcion}
+										onBlur={(e) =>
+											guardarDetalle(
+												m.id,
+												'descripcion',
+												m.descripcion,
+												e.target.value,
+											)
+										}
+										onKeyDown={guardarConEnter}
+										className={styles.inputDetalle}
+									/>
+								</td>
+							) : (
+								<td>{m.descripcion}</td>
+							)}
 							<td className={styles.categoriaCol}>
 								<div className={styles.selectorWrap}>
 									<select
@@ -260,7 +308,26 @@ export default function TablaMovimientos({
 									))}
 								</select>
 							</td>
-							<td className={styles.dependencia}>{m.asunto ?? '—'}</td>
+							<td className={styles.dependencia}>
+								{onDetalleChange ? (
+									<input
+										type='text'
+										defaultValue={m.asunto ?? ''}
+										onBlur={(e) =>
+											guardarDetalle(
+												m.id,
+												'asunto',
+												m.asunto ?? '',
+												e.target.value,
+											)
+										}
+										onKeyDown={guardarConEnter}
+										className={styles.inputDetalle}
+									/>
+								) : (
+									(m.asunto ?? '—')
+								)}
+							</td>
 							<td className={`${styles.monto} ${styles.debito}`}>
 								{fmt(m.debito)}
 							</td>

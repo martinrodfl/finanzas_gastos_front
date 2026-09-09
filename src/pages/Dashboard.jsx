@@ -205,6 +205,27 @@ export default function Dashboard() {
 		);
 	};
 
+	/**
+	 * Actualiza `descripcion`/`asunto` de un movimiento en el estado local
+	 * después de que el PATCH al backend fue exitoso.
+	 *
+	 * @param {number} id - ID del movimiento
+	 * @param {{ descripcion: string, asunto: string | null }} payload
+	 */
+	const handleDetalleChange = (id, payload) => {
+		setMovimientos((prev) =>
+			prev.map((m) =>
+				m.id === id
+					? {
+							...m,
+							descripcion: payload?.descripcion ?? m.descripcion,
+							asunto: payload?.asunto ?? null,
+						}
+					: m,
+			),
+		);
+	};
+
 	/** Formatea un mes YYYY-MM a nombre legible en español (ej: "abril 2026"). */
 	const formatMes = (m) => {
 		const [year, month] = m.split('-');
@@ -396,6 +417,7 @@ export default function Dashboard() {
 								categorias={categorias}
 								guardarCategoria={guardarCategoria}
 								onGastoFijoChange={handleGastoFijoChange}
+								onDetalleChange={handleDetalleChange}
 							/>
 						) : (
 							<VistaCategorias
